@@ -1,7 +1,9 @@
 import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 import InitialLayout from '@/components/InitialLayout';
+import { COLORS } from '@/constants/theme';
 
 //Tạo biến để tải clerk key từ env.local ( chỉ có máy của mình)
 const publishablekey=process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
@@ -17,9 +19,9 @@ export default function RootLayout() {
     <ClerkProvider publishableKey={publishablekey} tokenCache={tokenCache} >
       <ClerkLoaded>
         <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1 , backgroundColor: "black"}}>
+          <View style={{ flex: 1, backgroundColor: COLORS.background }}>
             <InitialLayout />
-          </SafeAreaView>
+          </View>
         </SafeAreaProvider>
       </ClerkLoaded>
     </ClerkProvider>

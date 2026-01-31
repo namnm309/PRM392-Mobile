@@ -11,7 +11,8 @@ export const styles = StyleSheet.create({
   },
   brandSection: {
     alignItems: "center",
-    marginTop: height * 0.12,
+    marginTop: height * 0.08,
+    marginBottom: 8,
   },
   logoContainer: {
     width: 60,
@@ -47,11 +48,96 @@ export const styles = StyleSheet.create({
     height: width * 0.75,
     maxHeight: 280,
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
   loginSection: {
     width: "100%",
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 24,
     alignItems: "center",
+  },
+  form: {
+    width: "100%",
+    maxWidth: 340,
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.grey,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceLight,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: COLORS.white,
+    marginBottom: 16,
+  },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#EF4444",
+    marginTop: -12,
+    marginBottom: 12,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.background,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.6,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+    width: "100%",
+    maxWidth: 340,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.surfaceLight,
+  },
+  dividerText: {
+    fontSize: 13,
+    color: COLORS.grey,
+    paddingHorizontal: 16,
+  },
+  linkRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  linkText: {
+    fontSize: 14,
+    color: COLORS.grey,
+  },
+  link: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.primary,
   },
   googleButton: {
     flexDirection: "row",
@@ -63,7 +149,7 @@ export const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 20,
     width: "100%",
-    maxWidth: 300,
+    maxWidth: 340,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -72,7 +158,6 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 5,
-    marginTop: 400, // chỉnh khoảng cách nút google cách tagline 
   },
   googleIconContainer: {
     width: 24,
@@ -91,5 +176,25 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.grey,
     maxWidth: 280,
+  },
+  stepTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: COLORS.white,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  otpInput: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceLight,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 20,
+    color: COLORS.white,
+    textAlign: "center",
+    letterSpacing: 8,
+    marginBottom: 16,
   },
 });

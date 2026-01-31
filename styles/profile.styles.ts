@@ -12,27 +12,26 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 100, // Space for tab bar
+    paddingBottom: 100,
   },
-  // Header Section
-  header: {
-    backgroundColor: '#1E3A8A', // Blue-900
-    paddingTop: 20,
-    paddingBottom: 30,
+  // User info (white header)
+  userInfoSection: {
+    backgroundColor: COLORS.white,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingTop: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  headerTop: {
+  userInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
   },
   avatarContainer: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -48,85 +47,117 @@ export const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.white,
+    color: COLORS.background,
     marginBottom: 4,
   },
-  userEmail: {
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  userPhone: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: COLORS.grey,
   },
-  settingsButton: {
-    padding: 8,
+  eyeButton: {
+    padding: 4,
   },
-  // Stats Cards
+  // Stats 2 columns
+  statsSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
   },
-  statCard: {
+  statColumn: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 16,
-    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  statColumnDivider: {
+    width: 1,
+    backgroundColor: '#E5E7EB',
+    alignSelf: 'stretch',
+  },
+  statIcon: {
+    marginBottom: 8,
+  },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: COLORS.white,
-    marginTop: 8,
+    color: COLORS.background,
     marginBottom: 4,
+  },
+  statValueGreen: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.primary,
+    marginBottom: 2,
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: COLORS.grey,
     textAlign: 'center',
   },
-  // VIP Card
-  vipCard: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#FF6B35',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+  statSubLabel: {
+    fontSize: 11,
+    color: COLORS.grey,
+    textAlign: 'center',
+    marginTop: 2,
   },
-  vipContent: {
+  // Banner Techmember
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#E0F2FE',
+    marginHorizontal: 20,
+    marginTop: 20,
     padding: 16,
-    backgroundColor: '#FF6B35', // Orange
+    borderRadius: 12,
   },
-  vipIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 215, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  bannerIcon: {
     marginRight: 12,
   },
-  vipTextContainer: {
+  bannerText: {
     flex: 1,
+    fontSize: 14,
+    color: COLORS.background,
+    lineHeight: 20,
   },
-  vipTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.white,
-    marginBottom: 4,
+  bannerCta: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
-  vipDescription: {
+  bannerCtaText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2563EB',
+  },
+  // Quick access row (4 items)
+  quickAccessRow: {
+    flexDirection: 'row',
+    marginTop: 24,
+    marginHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  quickAccessItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickAccessIcon: {
+    marginBottom: 8,
+  },
+  quickAccessLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    lineHeight: 18,
+    color: COLORS.background,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   // Section
   section: {
@@ -139,7 +170,6 @@ export const styles = StyleSheet.create({
     color: COLORS.background,
     marginBottom: 16,
   },
-  // Menu Items
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -169,21 +199,6 @@ export const styles = StyleSheet.create({
   menuItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  badge: {
-    backgroundColor: '#EF4444',
-    borderRadius: 12,
-    minWidth: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.white,
   },
   // Logout Button
   logoutButton: {
