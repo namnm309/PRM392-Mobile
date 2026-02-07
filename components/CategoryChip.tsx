@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   wrapperSelected: {
-    borderColor: COLORS.headerBlue,
-    backgroundColor: COLORS.headerBlue,
+    borderColor: COLORS.accentRed,
+    backgroundColor: COLORS.accentRed,
   },
   tag: {
     position: 'absolute',

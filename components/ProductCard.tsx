@@ -32,9 +32,11 @@ export function ProductCard({ product, width }: ProductCardProps) {
       onPress={() => router.push({ pathname: '/product/[id]', params: { id: product.id } })}
       activeOpacity={0.8}
     >
-      <View style={styles.badgeDiscount}>
-        <Text style={styles.badgeText}>Giảm {product.discountPercent}%</Text>
-      </View>
+      {product.discountPercent > 0 ? (
+        <View style={styles.badgeDiscount}>
+          <Text style={styles.badgeText}>Giảm {product.discountPercent}%</Text>
+        </View>
+      ) : null}
       {product.badgeSecondary ? (
         <View
           style={[

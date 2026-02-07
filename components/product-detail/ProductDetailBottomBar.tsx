@@ -2,10 +2,10 @@ import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,37 +16,39 @@ function formatPrice(v: number) {
 type ProductDetailBottomBarProps = {
   priceCurrent: number;
   priceOriginal: number;
+  onAddToCart?: () => void;
 };
 
 export function ProductDetailBottomBar({
   priceCurrent,
   priceOriginal,
+  onAddToCart,
 }: ProductDetailBottomBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 12);
 
   return (
     <View style={[styles.container, { paddingBottom: bottomPadding }]}>
-      <View style={styles.left}>
-        <Text style={styles.snewLabel}>Đặc quyền SNew</Text>
+      <View style={styles.priceRow}>
+        <Text style={styles.priceLabel}>Giá</Text>
         <View style={styles.prices}>
           <Text style={styles.priceOriginal}>{formatPrice(priceOriginal)}</Text>
           <Text style={styles.priceCurrent}>{formatPrice(priceCurrent)}</Text>
         </View>
       </View>
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.phoneIcon} activeOpacity={0.7}>
-          <Ionicons name="call" size={22} color={COLORS.accentRed} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.installmentBtn} activeOpacity={0.7}>
-          <Text style={styles.installmentText}>Trả góp 0%</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.buyBtn} activeOpacity={0.7}>
           <Text style={styles.buyText}>Mua ngay</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.cartBtn} activeOpacity={0.7}>
-          <Ionicons name="cart" size={22} color={COLORS.accentRed} />
-          <Ionicons name="add" size={16} color={COLORS.accentRed} />
+        <TouchableOpacity
+          style={styles.cartBtn}
+          activeOpacity={0.7}
+          onPress={onAddToCart}
+        >
+          <View style={styles.cartIcons}>
+            <Ionicons name="cart" size={22} color={COLORS.accentRed} />
+            <Ionicons name="add" size={14} color={COLORS.accentRed} />
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -55,20 +57,23 @@ export function ProductDetailBottomBar({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     paddingHorizontal: 16,
     paddingTop: 12,
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: COLORS.cartBorder,
+    gap: 12,
   },
-  left: {},
-  snewLabel: {
-    fontSize: 12,
-    color: COLORS.cartTextSecondary,
-    marginBottom: 2,
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  priceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.cartTextPrimary,
   },
   prices: {
     flexDirection: 'row',
@@ -90,27 +95,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  phoneIcon: {
-    padding: 8,
-  },
-  installmentBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.categoryLinkBlue,
-    backgroundColor: COLORS.white,
-  },
-  installmentText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.categoryLinkBlue,
-  },
   buyBtn: {
-    paddingVertical: 10,
+    flex: 1,
+    paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     backgroundColor: COLORS.accentRed,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buyText: {
     fontSize: 14,
@@ -118,12 +110,18 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   cartBtn: {
-    width: 44,
-    height: 44,
+    width: 52,
+    height: 48,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.cartBorder,
+    borderColor: COLORS.accentRed,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cartIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
 });

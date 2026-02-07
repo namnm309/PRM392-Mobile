@@ -1,3 +1,4 @@
+import { AddToCartToast } from '@/components/AddToCartToast';
 import { AskQuestionSection } from '@/components/product-detail/AskQuestionSection';
 import { KeyFeaturesSection } from '@/components/product-detail/KeyFeaturesSection';
 import { PaymentOffersSection } from '@/components/product-detail/PaymentOffersSection';
@@ -15,16 +16,125 @@ import { SaleCountdownBanner } from '@/components/product-detail/SaleCountdownBa
 import { StoreBranchesSection } from '@/components/product-detail/StoreBranchesSection';
 import { TechSpecsSection } from '@/components/product-detail/TechSpecsSection';
 import { getProductDetail } from '@/constants/productDetailData';
+import type { ProductDetail } from '@/constants/productDetailData';
+import { useCart } from '@/contexts/CartContext';
 import { COLORS } from '@/constants/theme';
-import { useLocalSearchParams } from 'expo-router';
-import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  fetchProductById,
+  mapApiProductToProductDetail,
+} from '@/lib/productsApi';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 const BOTTOM_BAR_HEIGHT = 90;
 
+const TOAST_DURATION_MS = 2000;
+
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const product = getProductDetail(id ?? 'lp1');
+  const router = useRouter();
+  const { addToCart } = useCart();
+  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddToCartToast, setShowAddToCartToast] = useState(false);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const productId = id ?? '';
+    if (!productId) {
+      setError('Không tìm thấy sản phẩm');
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fetchProductById(productId)
+      .then((apiProduct) => {
+        if (cancelled) return;
+        if (apiProduct) {
+          setProduct(mapApiProductToProductDetail(apiProduct));
+        } else {
+          setProduct(null);
+          setError('Không tìm thấy sản phẩm');
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Không thể tải sản phẩm');
+        try {
+          const fallback = getProductDetail(productId);
+          setProduct(fallback);
+        } catch {
+          setProduct(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const goToCart = () => {
+    setShowAddToCartToast(false);
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+      toastTimeoutRef.current = null;
+    }
+    router.replace('/(tabs)/cart');
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    addToCart({
+      id: product.id,
+      name: product.name,
+      priceCurrent: product.priceCurrent,
+      priceOriginal: product.priceOriginal,
+      imageUri: product.imageUri,
+    });
+    setShowAddToCartToast(true);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(goToCart, TOAST_DURATION_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.screen, styles.centered]}>
+        <ActivityIndicator size="large" color={COLORS.headerBlue} />
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={[styles.screen, styles.centered]}>
+        <ProductDetailHeader />
+        <Text style={styles.errorText}>
+          {error ?? 'Không tìm thấy sản phẩm'}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -57,16 +167,23 @@ export default function ProductDetailScreen() {
           productName={product.name}
           features={product.features}
         />
-        <ProductReviewsSection reviews={product.reviews} />
+        {product.reviews.totalReviews > 0 && (
+          <ProductReviewsSection reviews={product.reviews} />
+        )}
         <RelatedNewsSection news={product.relatedNews} />
         <AskQuestionSection />
         <QASection questions={product.questions} />
         <View style={{ height: BOTTOM_BAR_HEIGHT }} />
       </ScrollView>
+      <AddToCartToast
+        visible={showAddToCartToast}
+        onDismiss={goToCart}
+      />
       <View style={styles.bottomBar}>
         <ProductDetailBottomBar
           priceCurrent={product.priceCurrent}
           priceOriginal={product.priceOriginal}
+          onAddToCart={handleAddToCart}
         />
       </View>
     </View>
@@ -77,6 +194,10 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scroll: {
     flex: 1,
@@ -90,5 +211,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: COLORS.white,
+  },
+  errorText: {
+    fontSize: 14,
+    color: COLORS.categoryChipText,
+    padding: 16,
   },
 });

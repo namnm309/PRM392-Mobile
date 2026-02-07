@@ -3,12 +3,13 @@ import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 
 type ProductMediaGalleryProps = {
@@ -28,18 +29,27 @@ export function ProductMediaGallery({
 
   const activeItem = media[activeIndex] ?? media[0];
   const isVideo = activeItem?.type === 'video';
+  const hasImageUri = !isVideo && activeItem?.uri;
 
   return (
     <View style={styles.container}>
       <View style={[styles.mainMedia, { width: mainSize, height: mainSize * 0.9 }]}>
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderEmoji}>{isVideo ? '▶️' : '📱'}</Text>
-          {isVideo && (
-            <View style={styles.playButton}>
-              <Ionicons name="play" size={48} color={COLORS.white} />
-            </View>
-          )}
-        </View>
+        {hasImageUri ? (
+          <Image
+            source={{ uri: activeItem.uri }}
+            style={[styles.mainImage, { width: mainSize, height: mainSize * 0.9 }]}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderEmoji}>{isVideo ? '▶️' : '📱'}</Text>
+            {isVideo && (
+              <View style={styles.playButton}>
+                <Ionicons name="play" size={48} color={COLORS.white} />
+              </View>
+            )}
+          </View>
+        )}
         {productName && (
           <View style={styles.overlay}>
             <View style={styles.brandLogo}>
@@ -90,6 +100,12 @@ export function ProductMediaGallery({
             <View style={styles.thumbContent}>
               {item.type === 'video' ? (
                 <Text style={styles.thumbLabel}>Video</Text>
+              ) : item.uri ? (
+                <Image
+                  source={{ uri: item.uri }}
+                  style={styles.thumbImage}
+                  resizeMode="cover"
+                />
               ) : item.label ? (
                 <Text style={styles.thumbLabel} numberOfLines={2}>
                   {item.label}
@@ -113,6 +129,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.categoryContentBg,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  mainImage: {
+    backgroundColor: COLORS.categoryContentBg,
   },
   placeholder: {
     width: '100%',
@@ -213,10 +232,16 @@ const styles = StyleSheet.create({
   },
   thumbContent: {
     flex: 1,
+    width: '100%',
+    height: '100%',
     backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 4,
+    overflow: 'hidden',
+  },
+  thumbImage: {
+    width: '100%',
+    height: '100%',
   },
   thumbLabel: {
     fontSize: 10,

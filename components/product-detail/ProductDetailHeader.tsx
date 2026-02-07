@@ -1,3 +1,4 @@
+import { useCart } from '@/contexts/CartContext';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -12,9 +13,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const CART_BADGE_COUNT = 2;
-
 export function ProductDetailHeader() {
+  const { items } = useCart();
+  const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const paddingTop =
@@ -50,9 +51,11 @@ export function ProductDetailHeader() {
             activeOpacity={0.7}
           >
             <Ionicons name="cart-outline" size={22} color={COLORS.cartTextPrimary} />
-            {CART_BADGE_COUNT > 0 && (
+            {cartCount > 0 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{CART_BADGE_COUNT}</Text>
+                <Text style={styles.badgeText}>
+                  {cartCount > 99 ? '99+' : cartCount}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
