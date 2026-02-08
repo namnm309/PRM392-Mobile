@@ -159,8 +159,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.categoryChipBorder,
   },
   chipSelected: {
-    backgroundColor: COLORS.categoryLinkBlue,
-    borderColor: COLORS.categoryLinkBlue,
+    backgroundColor: COLORS.accentRed,
+    borderColor: COLORS.accentRed,
   },
   chipText: {
     fontSize: 13,

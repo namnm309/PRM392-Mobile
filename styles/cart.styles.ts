@@ -11,6 +11,125 @@ export const cartStyles = StyleSheet.create({
   headerBack: {
     padding: 8,
   },
+  // List container when has items
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 24,
+  },
+  // Cart item card
+  itemCard: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.cartBorder,
+  },
+  itemCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: COLORS.categoryChipBorder,
+    marginRight: 12,
+    marginTop: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemCheckboxChecked: {
+    backgroundColor: COLORS.accentRed,
+    borderColor: COLORS.accentRed,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: COLORS.categoryContentBg,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemImagePlaceholder: {
+    fontSize: 32,
+  },
+  itemContent: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.cartTextPrimary,
+    marginBottom: 4,
+  },
+  itemPriceCurrent: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.accentRed,
+  },
+  itemPriceOriginal: {
+    fontSize: 12,
+    color: COLORS.grey,
+    textDecorationLine: 'line-through',
+    marginTop: 2,
+  },
+  itemDiscount: {
+    fontSize: 12,
+    color: COLORS.accentRed,
+    marginTop: 4,
+  },
+  itemQuantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 8,
+  },
+  itemQuantityBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.cartBorder,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemQuantityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.cartTextPrimary,
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  // Footer with select all
+  footerSelectAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  footerSelectAllCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: COLORS.categoryChipBorder,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerSelectAllCheckboxChecked: {
+    backgroundColor: COLORS.accentRed,
+    borderColor: COLORS.accentRed,
+  },
+  footerSelectAllLabel: {
+    fontSize: 14,
+    color: COLORS.cartTextPrimary,
+  },
+  footerSubtotalRed: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.accentRed,
+  },
   // Empty state – container căn giữa
   emptyContainer: {
     flexGrow: 1,
@@ -57,7 +176,7 @@ export const cartStyles = StyleSheet.create({
     marginBottom: 24,
   },
   emptyCardCta: {
-    backgroundColor: COLORS.cartPrimary,
+    backgroundColor: COLORS.accentRed,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -98,7 +217,7 @@ export const cartStyles = StyleSheet.create({
     color: COLORS.cartPrimary,
   },
   footerButton: {
-    backgroundColor: COLORS.cartPrimary,
+    backgroundColor: COLORS.accentRed,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
