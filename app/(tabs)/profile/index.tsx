@@ -57,31 +57,31 @@ export default function Profile() {
   const hasPhone = rawPhone.length > 0 || true;
 
   const quickAccessItems = [
-    { label: 'Hạng thành viên', icon: 'heart-outline' as const, onPress: () => {} },
-    { label: 'Mã giảm giá', icon: 'pricetag-outline' as const, onPress: () => {} },
-    { label: 'Lịch sử mua hàng', icon: 'receipt-outline' as const, onPress: () => {} },
+    { label: 'Hạng thành viên', icon: 'heart-outline' as const, onPress: () => router.push('/(tabs)/profile/membership') },
+    { label: 'Mã giảm giá', icon: 'pricetag-outline' as const, onPress: () => router.push('/(tabs)/profile/vouchers') },
+    { label: 'Lịch sử mua hàng', icon: 'receipt-outline' as const, onPress: () => router.push('/(tabs)/profile/orders') },
     { label: 'Học sinh/Sinh viên', icon: 'school-outline' as const, onPress: () => {} },
   ];
 
   const historyItems = [
-    { label: 'Lịch sử mua hàng', icon: 'document-text-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
+    { label: 'Lịch sử mua hàng', icon: 'document-text-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/orders') },
     { label: 'Tra cứu bảo hành', icon: 'refresh-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
   ];
 
   const promotionItems = [
-    { label: 'Hạng thành viên', icon: 'heart-outline' as const, iconColor: '#EF4444', onPress: () => {} },
+    { label: 'Hạng thành viên', icon: 'heart-outline' as const, iconColor: '#EF4444', onPress: () => router.push('/(tabs)/profile/membership') },
     { label: 'Tech-edu', icon: 'school-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
   ];
 
   const accountItems = [
     { label: 'Thông tin cá nhân', icon: 'person-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/edit') },
-    { label: 'Sổ địa chỉ', icon: 'location-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
-    { label: 'Liên kết tài khoản', icon: 'link-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
+    { label: 'Sổ địa chỉ', icon: 'location-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/addresses') },
+    { label: 'Liên kết tài khoản', icon: 'link-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/linked-accounts') },
     { label: 'Đổi mật khẩu', icon: 'lock-closed-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
   ];
 
   const otherItems = [
-    { label: 'Sản phẩm yêu thích', icon: 'heart-outline' as const, iconColor: '#EF4444', onPress: () => {} },
+    { label: 'Sản phẩm yêu thích', icon: 'heart-outline' as const, iconColor: '#EF4444', onPress: () => router.push('/(tabs)/profile/wishlist') },
     { label: 'Tư vấn và hỗ trợ', icon: 'headset-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
     { label: 'Điều khoản sử dụng', icon: 'document-text-outline' as const, iconColor: COLORS.grey, onPress: () => {} },
   ];
