@@ -1,12 +1,12 @@
+import { HomeCategories } from '@/components/HomeCategories';
+import { HomeHeader } from '@/components/HomeHeader';
+import { HomeProductSections } from '@/components/HomeProductSections';
+import { HomePromoBanner } from '@/components/HomePromoBanner';
+import { TabScreenWrapper } from '@/components/TabScreenWrapper';
+import { COLORS } from '@/constants/theme';
+import { useTabBarBottomPadding } from '@/hooks/useTabBarBottomPadding';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { useTabBarBottomPadding } from '@/hooks/useTabBarBottomPadding';
-import { COLORS } from '@/constants/theme';
-import { HomeHeader } from '@/components/HomeHeader';
-import { HomeCategories } from '@/components/HomeCategories';
-import { HomePromoBanner } from '@/components/HomePromoBanner';
-import { HomeFeaturedProducts } from '@/components/HomeFeaturedProducts';
-import { TabScreenWrapper } from '@/components/TabScreenWrapper';
 
 export default function HomeScreen() {
   const tabBarBottomPadding = useTabBarBottomPadding();
@@ -22,7 +22,7 @@ export default function HomeScreen() {
       >
         <HomeCategories />
         <HomePromoBanner />
-        <HomeFeaturedProducts />
+        <HomeProductSections />
       </ScrollView>
     </View>
     </TabScreenWrapper>
