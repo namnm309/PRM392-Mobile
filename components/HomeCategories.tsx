@@ -1,48 +1,114 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { fetchCategories } from '@/lib/categoriesApi';
+import type { ApiCategory } from '@/lib/categoriesApi';
 import { COLORS } from '@/constants/theme';
-
-const CATEGORIES: { label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { label: 'Điện thoại, Tablet', icon: 'phone-portrait-outline' },
-  { label: 'Laptop', icon: 'laptop-outline' },
-  { label: 'Đồng hồ', icon: 'watch-outline' },
-  { label: 'Âm thanh', icon: 'headset-outline' },
-  { label: 'Đồ gia dụng', icon: 'home-outline' },
-  { label: 'Màn hình', icon: 'desktop-outline' },
-  { label: 'Tivi', icon: 'tv-outline' },
-  { label: 'Phụ kiện', icon: 'hardware-chip-outline' },
-  { label: 'Hàng cũ', icon: 'refresh-outline' },
-  { label: 'Khuyến mãi', icon: 'pricetag-outline' },
-];
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const COLS = 5;
+const MAX_ITEMS = 10;
+
+const FALLBACK_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  'Điện thoại': 'phone-portrait-outline',
+  'Tablet': 'tablet-portrait-outline',
+  'Laptop': 'laptop-outline',
+  'Âm thanh': 'headset-outline',
+  'Đồng hồ': 'watch-outline',
+  'Màn hình': 'desktop-outline',
+  'Tivi': 'tv-outline',
+  default: 'grid-outline',
+};
+
+function getIconForCategory(name: string): keyof typeof Ionicons.glyphMap {
+  return FALLBACK_ICONS[name] ?? FALLBACK_ICONS.default;
+}
 
 export function HomeCategories() {
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchCategories()
+      .then((data) => {
+        if (!cancelled) setCategories(data.slice(0, MAX_ITEMS));
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Lỗi tải danh mục');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handlePress = (categoryId: string) => {
+    router.push({ pathname: '/category' as const, params: { categoryId } });
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="small" color={COLORS.headerBlue} />
+      </View>
+    );
+  }
+
+  if (error || categories.length === 0) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>{error ?? 'Chưa có danh mục'}</Text>
+      </View>
+    );
+  }
+
+  const rows = Math.ceil(categories.length / COLS);
+
   return (
     <View style={styles.container}>
-      {[0, 1].map((rowIndex) => (
+      {Array.from({ length: rows }).map((_, rowIndex) => (
         <View key={rowIndex} style={styles.row}>
-          {CATEGORIES.slice(rowIndex * COLS, (rowIndex + 1) * COLS).map(
-            (cat, i) => (
+          {categories
+            .slice(rowIndex * COLS, (rowIndex + 1) * COLS)
+            .map((cat) => (
               <TouchableOpacity
-                key={cat.label}
+                key={cat.id}
                 style={styles.cell}
                 activeOpacity={0.7}
+                onPress={() => handlePress(cat.id)}
               >
                 <View style={styles.iconBox}>
-                  <Ionicons
-                    name={cat.icon}
-                    size={24}
-                    color={COLORS.headerBlue}
-                  />
+                  {cat.imageUrl ? (
+                    <Image
+                      source={{ uri: cat.imageUrl }}
+                      style={styles.iconImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Ionicons
+                      name={getIconForCategory(cat.name)}
+                      size={24}
+                      color={COLORS.headerBlue}
+                    />
+                  )}
                 </View>
                 <Text style={styles.label} numberOfLines={2}>
-                  {cat.label}
+                  {cat.name}
                 </Text>
               </TouchableOpacity>
-            )
-          )}
+            ))}
         </View>
       ))}
     </View>
@@ -55,6 +121,11 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
     backgroundColor: COLORS.white,
+  },
+  centered: {
+    minHeight: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   row: {
     flexDirection: 'row',
@@ -76,9 +147,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 6,
   },
+  iconImage: {
+    width: 32,
+    height: 32,
+  },
   label: {
     fontSize: 11,
     color: COLORS.categoryChipText,
     textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 13,
+    color: COLORS.categoryChipText,
   },
 });

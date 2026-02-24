@@ -81,6 +81,11 @@ export function RoundedTabBar({
   navigation,
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const currentRoute = state.routes[state.index];
+  if (currentRoute?.name === 'cart') {
+    return null;
+  }
+
   const bottom = Math.max(insets.bottom, 4);
 
   return (
@@ -94,7 +99,7 @@ export function RoundedTabBar({
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
-          const color = isFocused ? COLORS.categoryLinkBlue : COLORS.grey;
+          const color = isFocused ? COLORS.accentRed : COLORS.grey;
           const icon = options.tabBarIcon
             ? options.tabBarIcon({
                 focused: isFocused,
@@ -128,7 +133,7 @@ export function RoundedTabBar({
             <TabBarItem
               key={route.key}
               isFocused={isFocused}
-              activeColor={COLORS.categoryLinkBlue}
+              activeColor={COLORS.accentRed}
               inactiveColor={COLORS.grey}
               label={options.title ?? undefined}
               icon={icon}
