@@ -9,12 +9,13 @@ export default function TabLayout() {
   return (
     <Tabs
       tabBar={(props) => <RoundedTabBar {...props} />}
-      screenOptions={{
-        tabBarActiveTintColor: COLORS.categoryLinkBlue,
+      screenOptions={({ route }) => ({
+        tabBarStyle: route.name === 'cart' ? { display: 'none' } : undefined,
+        tabBarActiveTintColor: COLORS.accentRed,
         tabBarInactiveTintColor: COLORS.grey,
         headerShown: false,
         tabBarShowLabel: true,
-      }}>
+      })}>
       <Tabs.Screen
         name="index"
         options={{
