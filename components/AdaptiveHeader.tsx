@@ -49,7 +49,12 @@ export function AdaptiveHeader({
 
   const isLight = variant === 'light';
   const containerVariant = isLight && !transparent
-    ? { backgroundColor: LIGHT_BG, borderBottomColor: LIGHT_BORDER }
+    ? {
+        backgroundColor: LIGHT_BG,
+        borderBottomColor: LIGHT_BORDER,
+        zIndex: 10,
+        elevation: 4,
+      }
     : !transparent && styles.withBackground;
 
   return (

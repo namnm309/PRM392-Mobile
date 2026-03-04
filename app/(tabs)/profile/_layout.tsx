@@ -12,6 +12,12 @@ export default function ProfileLayout() {
           headerBackTitle: 'Quay lại',
         }}
       />
+      <Stack.Screen name="vouchers" />
+      <Stack.Screen name="orders" />
+      <Stack.Screen name="addresses" />
+      <Stack.Screen name="wishlist" />
+      <Stack.Screen name="linked-accounts" />
+      <Stack.Screen name="membership" />
     </Stack>
   );
 }

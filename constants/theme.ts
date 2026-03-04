@@ -27,4 +27,5 @@ export const COLORS = {
   cartTextSecondary: '#757575',
   cartTextPrimary: '#212121',
   cartBorder: '#E0E0E0',
+  studentPricePurple: '#7B1FA2',
 } as const;
