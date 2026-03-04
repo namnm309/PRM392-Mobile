@@ -17,12 +17,14 @@ type ProductDetailBottomBarProps = {
   priceCurrent: number;
   priceOriginal: number;
   onAddToCart?: () => void;
+  onBuyNow?: () => void;
 };
 
 export function ProductDetailBottomBar({
   priceCurrent,
   priceOriginal,
   onAddToCart,
+  onBuyNow,
 }: ProductDetailBottomBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 12);
@@ -37,7 +39,7 @@ export function ProductDetailBottomBar({
         </View>
       </View>
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.buyBtn} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.buyBtn} activeOpacity={0.7} onPress={onBuyNow}>
           <Text style={styles.buyText}>Mua ngay</Text>
         </TouchableOpacity>
         <TouchableOpacity
