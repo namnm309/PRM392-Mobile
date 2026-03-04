@@ -150,7 +150,7 @@ export default function CartScreen() {
 
   const handleBuyNow = () => {
     if (isEmpty) return;
-    // TODO: navigate to checkout when cart has items
+    router.push('/checkout');
   };
 
   const handleSelectAll = () => {

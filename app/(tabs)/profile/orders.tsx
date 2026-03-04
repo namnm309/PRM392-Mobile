@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -36,6 +36,7 @@ export default function OrdersScreen() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const ordersLoadedRef = useRef(false);
 
   const fetchOrders = useCallback(async (pageNum: number = 1, refresh: boolean = false) => {
     try {
@@ -56,9 +57,43 @@ export default function OrdersScreen() {
     }
   }, [getToken]);
 
+  // Load orders on mount (only once)
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    // Prevent multiple calls
+    if (ordersLoadedRef.current) return;
+    
+    let isMounted = true;
+    ordersLoadedRef.current = true;
+    
+    const loadOrders = async () => {
+      try {
+        setError(null);
+        setLoading(true);
+        const data = await getMyOrders(getToken, 1, 10);
+        
+        if (!isMounted) return;
+        
+        setOrders(data.items);
+        setHasMore(data.hasNextPage);
+        setPage(1);
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err.message || 'Không thể tải lịch sử đơn hàng');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadOrders();
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
