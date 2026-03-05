@@ -108,7 +108,7 @@ export default function VouchersScreen() {
           variant="light"
           title="Mã giảm giá"
           left={
-            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8 }}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={{ padding: 8 }}>
               <Ionicons name="chevron-back" size={24} color={COLORS.background} />
             </TouchableOpacity>
           }

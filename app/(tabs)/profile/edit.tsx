@@ -307,7 +307,7 @@ export default function ProfileEditScreen() {
 
       if (json?.success && json.data) setUser(json.data);
       Alert.alert('Thành công', 'Đã lưu thông tin cá nhân.', [
-        { text: 'OK', onPress: () => router.back() },
+        { text: 'OK', onPress: () => router.push('/(tabs)/profile') },
       ]);
     } catch (e) {
       const msg = e instanceof SyntaxError ? 'Phản hồi từ máy chủ không hợp lệ.' : 'Lỗi kết nối. Kiểm tra mạng và thử lại.';

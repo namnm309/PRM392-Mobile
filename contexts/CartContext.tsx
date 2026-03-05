@@ -75,7 +75,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [isSignedIn, getToken, mapCartItemDtoToCartItem]);
+  }, [isSignedIn, mapCartItemDtoToCartItem]);
 
   // Load cart on mount and when user signs in
   useEffect(() => {
