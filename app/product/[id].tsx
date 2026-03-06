@@ -111,6 +111,19 @@ export default function ProductDetailScreen() {
     toastTimeoutRef.current = setTimeout(goToCart, TOAST_DURATION_MS);
   };
 
+  const handleBuyNow = () => {
+    if (!product) return;
+    // Add to cart first, then navigate to checkout
+    addToCart({
+      id: product.id,
+      name: product.name,
+      priceCurrent: product.priceCurrent,
+      priceOriginal: product.priceOriginal,
+      imageUri: product.imageUri,
+    });
+    router.push('/checkout');
+  };
+
   useEffect(() => {
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -184,6 +197,7 @@ export default function ProductDetailScreen() {
           priceCurrent={product.priceCurrent}
           priceOriginal={product.priceOriginal}
           onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
         />
       </View>
     </View>

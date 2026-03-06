@@ -11,7 +11,7 @@ import Animated, { FadeOutLeft } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AdaptiveHeader } from '@/components/AdaptiveHeader';
+import { CartHeader } from '@/components/CartHeader';
 import { RemoveFromCartToast } from '@/components/RemoveFromCartToast';
 import { TabScreenWrapper } from '@/components/TabScreenWrapper';
 import { useCart } from '@/contexts/CartContext';
@@ -150,7 +150,7 @@ export default function CartScreen() {
 
   const handleBuyNow = () => {
     if (isEmpty) return;
-    // TODO: navigate to checkout when cart has items
+    router.push('/checkout');
   };
 
   const handleSelectAll = () => {
@@ -160,21 +160,7 @@ export default function CartScreen() {
   return (
     <TabScreenWrapper>
       <View style={cartStyles.screen}>
-        <View style={{ flexShrink: 0 }}>
-          <AdaptiveHeader
-            variant="light"
-            title="Giỏ hàng của bạn"
-            left={
-            <TouchableOpacity
-              style={cartStyles.headerBack}
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chevron-back" size={24} color={COLORS.cartTextPrimary} />
-            </TouchableOpacity>
-          }
-          />
-        </View>
+        <CartHeader />
 
         {isEmpty ? (
           <ScrollView
