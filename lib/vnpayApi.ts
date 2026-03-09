@@ -21,11 +21,20 @@ export async function createVnPayUrl(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to create payment URL' }));
+    const errorText = await response.text();
+    
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: 'Failed to create payment URL' };
+    }
+    
     throw new Error(error.message || `Failed to create payment URL: ${response.status}`);
   }
 
   const json = (await response.json()) as ApiResponse<VnPayUrlResponse>;
+  
   if (!json.success || !json.data) {
     throw new Error(json.message || 'Failed to create payment URL');
   }

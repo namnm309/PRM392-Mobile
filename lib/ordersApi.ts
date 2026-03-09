@@ -6,7 +6,9 @@ export type CheckoutRequest = {
   paymentMethod: 'COD' | 'Online';
   voucherId?: string;
   notes?: string;
-  cartItemIds?: string[]; // List of cart item IDs to checkout
+  cartItemIds?: string[];
+  shippingFee: number;
+  shippingServiceId?: number;
 };
 
 export type OrderResponse = {
@@ -22,6 +24,10 @@ export type OrderResponse = {
   vnPayTransactionNo?: string;
   paymentDate?: string;
   notes?: string;
+  shippingFee: number;
+  ghnOrderCode?: string;
+  expectedDeliveryTime?: string;
+  shippingServiceId?: number;
   createdAt: string;
   orderItems: Array<{
     id: string;
@@ -50,15 +56,26 @@ export async function checkout(
       voucherId: request.voucherId,
       notes: request.notes,
       cartItemIds: request.cartItemIds,
+      shippingFee: request.shippingFee,
+      shippingServiceId: request.shippingServiceId,
     }),
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Checkout failed' }));
+    const errorText = await response.text();
+    
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: 'Checkout failed' };
+    }
+    
     throw new Error(error.message || `Checkout failed: ${response.status}`);
   }
 
   const json = (await response.json()) as ApiResponse<OrderResponse>;
+  
   if (!json.success || !json.data) {
     throw new Error(json.message || 'Checkout failed');
   }

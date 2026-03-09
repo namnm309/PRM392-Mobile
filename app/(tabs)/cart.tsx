@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   Image,
+  Alert,
 } from 'react-native';
 import Animated, { FadeOutLeft } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -34,7 +35,7 @@ function CartItemRow({
   onRemove: () => void;
   onUpdateQuantity: (q: number) => void;
 }) {
-  const isSelected = item.selected ?? false;
+  const isSelected = item.selected === true;
   const discount = item.priceOriginal - item.priceCurrent;
 
   return (
@@ -116,7 +117,7 @@ export default function CartScreen() {
   } = useCart();
 
   const isEmpty = items.length === 0;
-  const allSelected = items.length > 0 && items.every((i) => i.selected);
+  const allSelected = items.length > 0 && items.every((i) => i.selected === true);
   const [showRemoveToast, setShowRemoveToast] = useState(false);
   const removeToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -150,6 +151,11 @@ export default function CartScreen() {
 
   const handleBuyNow = () => {
     if (isEmpty) return;
+    const selectedCount = items.filter(item => item.selected === true).length;
+    if (selectedCount === 0) {
+      Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+      return;
+    }
     router.push('/checkout');
   };
 

@@ -92,23 +92,11 @@ export default function AddressesScreen() {
   };
 
   const openAddModal = () => {
-    resetForm();
-    setModalVisible(true);
+    router.push('/address-form');
   };
 
   const openEditModal = (address: AddressDto) => {
-    setEditingAddress(address);
-    setFormData({
-      recipientName: address.recipientName,
-      phoneNumber: address.phoneNumber,
-      city: address.city,
-      district: address.district,
-      ward: address.ward,
-      addressLine1: address.addressLine1,
-      addressLine2: address.addressLine2 || '',
-      isPrimary: address.isPrimary,
-    });
-    setModalVisible(true);
+    router.push({ pathname: '/address-form', params: { editId: address.id } });
   };
 
   const handleSubmit = async () => {

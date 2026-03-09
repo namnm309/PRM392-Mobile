@@ -27,12 +27,27 @@ export default function VnPayPaymentScreen() {
   const [loading, setLoading] = useState(true);
   const processedRef = useRef(false);
 
+  // Decode the URL if it was encoded
+  let decodedUrl = paymentUrl;
+  if (paymentUrl && typeof paymentUrl === 'string') {
+    try {
+      decodedUrl = decodeURIComponent(paymentUrl);
+    } catch (e) {
+      console.error('URL decode failed:', e);
+    }
+  }
+
   const handleNavigationChange = useCallback(
     (navState: WebViewNavigation) => {
       if (processedRef.current) return;
 
       const url = navState.url;
-      if (!url.includes(RETURN_URL_PATH)) return;
+      
+      // Only process if the URL is actually the return URL from backend
+      // Not just containing the return URL as a parameter
+      if (!url.startsWith(API_BASE_URL) || !url.includes(RETURN_URL_PATH)) {
+        return;
+      }
 
       processedRef.current = true;
 
@@ -58,7 +73,8 @@ export default function VnPayPaymentScreen() {
             ]
           );
         }
-      } catch {
+      } catch (error) {
+        console.error('Error processing return URL:', error);
         processedRef.current = false;
       }
     },
@@ -89,6 +105,22 @@ export default function VnPayPaymentScreen() {
     );
   }
 
+  // Handle case where paymentUrl might be an array (React Navigation quirk)
+  const urlString = Array.isArray(decodedUrl) ? decodedUrl[0] : decodedUrl;
+  
+  if (!urlString || typeof urlString !== 'string') {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>URL thanh toán không hợp lệ</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Quay lại</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
@@ -111,19 +143,29 @@ export default function VnPayPaymentScreen() {
       )}
 
       <WebView
-        source={{ uri: paymentUrl }}
+        source={{ uri: urlString }}
         style={styles.webview}
         onNavigationStateChange={handleNavigationChange}
+        onLoadStart={() => setLoading(true)}
         onLoadEnd={() => setLoading(false)}
-        onError={() => {
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.error('WebView error:', nativeEvent);
           setLoading(false);
           Alert.alert('Lỗi', 'Không thể tải trang thanh toán. Vui lòng thử lại.', [
             { text: 'Quay lại', onPress: () => router.back() },
           ]);
         }}
+        onHttpError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.error('WebView HTTP error:', nativeEvent.statusCode);
+        }}
         javaScriptEnabled
         domStorageEnabled
         startInLoadingState={false}
+        mixedContentMode="compatibility"
+        allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction={false}
       />
     </View>
   );

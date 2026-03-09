@@ -19,6 +19,7 @@ import {
 
 export type CartItem = {
   id: string;
+  productId: string;
   name: string;
   priceCurrent: number;
   priceOriginal: number;
@@ -34,6 +35,7 @@ type CartContextValue = {
   updateQuantity: (id: string, quantity: number) => void;
   toggleSelect: (id: string) => void;
   selectAll: (selected: boolean) => void;
+  selectOnly: (productId: string) => void;
   reloadCart: () => Promise<void>;
   selectedIds: Set<string>;
   subtotal: number;
@@ -51,6 +53,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const mapCartItemDtoToCartItem = useCallback((dto: CartItemDto): CartItem => {
     return {
       id: dto.id,
+      productId: dto.productId,
       name: dto.productName,
       priceCurrent: dto.productDiscountPrice ?? dto.productPrice,
       priceOriginal: dto.productPrice,
@@ -68,14 +71,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       const cart = await getCart(getToken);
       const mappedItems = cart.items.map(mapCartItemDtoToCartItem);
-      setItems(mappedItems);
+      
+      // Preserve selected state from existing items
+      setItems((prevItems) => {
+        if (prevItems.length === 0) {
+          // First load, all items selected by default
+          return mappedItems;
+        }
+        
+        // Merge: keep existing selection state
+        const prevSelectedMap = new Map(
+          prevItems.map(item => [item.id, item.selected ?? true])
+        );
+        
+        return mappedItems.map(item => ({
+          ...item,
+          selected: prevSelectedMap.get(item.id) ?? true,
+        }));
+      });
     } catch (error) {
       console.error('Error loading cart:', error);
       // Continue with empty cart if error
     } finally {
       setLoading(false);
     }
-  }, [isSignedIn, mapCartItemDtoToCartItem]);
+  }, [isSignedIn, getToken, mapCartItemDtoToCartItem]);
 
   // Load cart on mount and when user signs in
   useEffect(() => {
@@ -104,6 +124,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ...prev,
             {
               id: product.id,
+              productId: product.id,
               name: product.name,
               priceCurrent: product.priceCurrent,
               priceOriginal: product.priceOriginal,
@@ -145,6 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ...prev,
             {
               id: product.id,
+              productId: product.id,
               name: product.name,
               priceCurrent: product.priceCurrent,
               priceOriginal: product.priceOriginal,
@@ -221,7 +243,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const toggleSelect = useCallback((id: string) => {
     setItems((prev) =>
       prev.map((i) =>
-        i.id === id ? { ...i, selected: !i.selected } : i
+        i.id === id ? { ...i, selected: !(i.selected === true) } : i
       )
     );
   }, []);
@@ -230,15 +252,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => prev.map((i) => ({ ...i, selected })));
   }, []);
 
+  const selectOnly = useCallback((productId: string) => {
+    setItems((prev) =>
+      prev.map((i) => ({
+        ...i,
+        selected: i.productId === productId,
+      }))
+    );
+  }, []);
+
   const selectedIds = useMemo(
-    () => new Set(items.filter((i) => i.selected).map((i) => i.id)),
+    () => new Set(items.filter((i) => i.selected === true).map((i) => i.id)),
     [items]
   );
 
   const subtotal = useMemo(
     () =>
       items
-        .filter((i) => i.selected)
+        .filter((i) => i.selected === true)
         .reduce((sum, i) => sum + i.priceCurrent * i.quantity, 0),
     [items]
   );
@@ -251,11 +282,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       updateQuantity,
       toggleSelect,
       selectAll,
+      selectOnly,
       reloadCart: loadCart,
       selectedIds,
       subtotal,
     }),
-    [items, addToCart, removeItem, updateQuantity, toggleSelect, selectAll, loadCart, selectedIds, subtotal]
+    [items, addToCart, removeItem, updateQuantity, toggleSelect, selectAll, selectOnly, loadCart, selectedIds, subtotal]
   );
 
   return (
