@@ -1,4 +1,5 @@
 import { checkout } from '@/lib/ordersApi';
+import { createVnPayUrl } from '@/lib/vnpayApi';
 import { getMyAddresses, formatAddress, type AddressDto } from '@/lib/addressApi';
 import { addCartItem, getCart } from '@/lib/cartApi';
 import { useCart } from '@/contexts/CartContext';
@@ -135,15 +136,20 @@ export default function CheckoutScreen() {
         cartItemIds: cartItemIds.length > 0 ? cartItemIds : undefined,
       });
 
-      // Reload cart after successful checkout
-      // Backend has already removed the checked out items from database
       await reloadCart();
 
-      // Navigate to thank you page with order ID
-      router.replace({
-        pathname: '/thank-you',
-        params: { orderId: order.id },
-      });
+      if (paymentMethod === 'Online') {
+        const paymentUrl = await createVnPayUrl(getToken, order.id);
+        router.replace({
+          pathname: '/vnpay-payment',
+          params: { paymentUrl, orderId: order.id },
+        });
+      } else {
+        router.replace({
+          pathname: '/thank-you',
+          params: { orderId: order.id },
+        });
+      }
     } catch (error) {
       Alert.alert(
         'Lỗi',

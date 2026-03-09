@@ -18,6 +18,9 @@ export type OrderResponse = {
   discountAmount: number;
   totalAmount: number;
   paymentMethod: string;
+  paymentStatus: string;
+  vnPayTransactionNo?: string;
+  paymentDate?: string;
   notes?: string;
   createdAt: string;
   orderItems: Array<{
