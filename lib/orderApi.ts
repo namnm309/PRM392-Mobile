@@ -63,6 +63,7 @@ export interface OrderDto {
   updatedAt: string;
   deliveredAt: string | null;
   orderItems: OrderItemDto[];
+  ghnOrderCode: string | null;
 }
 
 export interface PagedResponse<T> {
