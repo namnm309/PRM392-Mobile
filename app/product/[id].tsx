@@ -40,7 +40,7 @@ const TOAST_DURATION_MS = 2000;
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { addToCart, selectOnly } = useCart();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,16 +111,19 @@ export default function ProductDetailScreen() {
     toastTimeoutRef.current = setTimeout(goToCart, TOAST_DURATION_MS);
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!product) return;
-    // Add to cart first, then navigate to checkout
-    addToCart({
+    // Add to cart first
+    await addToCart({
       id: product.id,
       name: product.name,
       priceCurrent: product.priceCurrent,
       priceOriginal: product.priceOriginal,
       imageUri: product.imageUri,
     });
+    // Select only this product for checkout
+    selectOnly(product.id);
+    // Navigate to checkout
     router.push('/checkout');
   };
 

@@ -8,9 +8,6 @@ export const cartStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.cartBackground,
   },
-  headerBack: {
-    padding: 8,
-  },
   // List container when has items
   listContainer: {
     paddingHorizontal: 16,

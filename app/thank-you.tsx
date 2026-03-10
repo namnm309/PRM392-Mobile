@@ -24,7 +24,10 @@ export default function ThankYouScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
-  const { orderId } = useLocalSearchParams<{ orderId: string }>();
+  const { orderId, paymentSuccess } = useLocalSearchParams<{
+    orderId: string;
+    paymentSuccess?: string;
+  }>();
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const orderLoadedRef = useRef(false);
@@ -117,9 +120,13 @@ export default function ThankYouScreen() {
               </View>
             </View>
 
-            <Text style={styles.title}>Đặt hàng thành công!</Text>
+            <Text style={styles.title}>
+              {paymentSuccess === 'true' ? 'Thanh toán thành công!' : 'Đặt hàng thành công!'}
+            </Text>
             <Text style={styles.subtitle}>
-              Cảm ơn bạn đã mua sắm tại TechStore. Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.
+              {paymentSuccess === 'true'
+                ? 'Thanh toán qua VNPAY đã hoàn tất. Đơn hàng của bạn đang được xử lý.'
+                : 'Cảm ơn bạn đã mua sắm tại TechStore. Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.'}
             </Text>
 
             {order && (
@@ -139,22 +146,32 @@ export default function ThankYouScreen() {
                     {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 'Thanh toán online'}
                   </Text>
                 </View>
+                {order.paymentMethod === 'Online' && (
+                  <View style={styles.orderInfoRow}>
+                    <Text style={styles.orderInfoLabel}>Thanh toán:</Text>
+                    <Text style={[
+                      styles.orderInfoValue,
+                      { color: paymentSuccess === 'true' || order.paymentStatus === 'Paid'
+                        ? '#22c55e' : COLORS.accentRed }
+                    ]}>
+                      {paymentSuccess === 'true' || order.paymentStatus === 'Paid'
+                        ? 'Đã thanh toán qua VNPAY'
+                        : 'Chưa thanh toán'}
+                    </Text>
+                  </View>
+                )}
                 <View style={styles.orderInfoRow}>
                   <Text style={styles.orderInfoLabel}>Trạng thái:</Text>
                   <Text style={styles.orderInfoValue}>
-<<<<<<< Updated upstream
-                    {order.status === 'Pending' ? 'Đang chờ xử lý' : order.status}
-=======
                     {order.status === 'Pending'
                       ? 'Đang chờ shop xác nhận'
                       : order.status === 'Processing'
-                      ? 'Shop đã xác nhận, đang chuẩn bị giao / GHN đang xử lý'
-                      : order.status === 'Shipped'
-                      ? 'Đang giao hàng'
-                      : order.status === 'Delivered' || order.status === 'SUCCESS'
-                      ? 'Đã giao thành công'
-                      : order.status}
->>>>>>> Stashed changes
+                        ? 'Shop đã xác nhận, đang chuẩn bị giao / GHN đang xử lý'
+                        : order.status === 'Shipped'
+                          ? 'Đang giao hàng'
+                          : order.status === 'Delivered' || order.status === 'SUCCESS'
+                            ? 'Đã giao thành công'
+                            : order.status}
                   </Text>
                 </View>
 

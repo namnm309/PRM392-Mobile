@@ -6,12 +6,13 @@ import {
   Pressable,
   ScrollView,
   Image,
+  Alert,
 } from 'react-native';
 import Animated, { FadeOutLeft } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AdaptiveHeader } from '@/components/AdaptiveHeader';
+import { CartHeader } from '@/components/CartHeader';
 import { RemoveFromCartToast } from '@/components/RemoveFromCartToast';
 import { TabScreenWrapper } from '@/components/TabScreenWrapper';
 import { useCart } from '@/contexts/CartContext';
@@ -34,7 +35,7 @@ function CartItemRow({
   onRemove: () => void;
   onUpdateQuantity: (q: number) => void;
 }) {
-  const isSelected = item.selected ?? false;
+  const isSelected = item.selected === true;
   const discount = item.priceOriginal - item.priceCurrent;
 
   return (
@@ -116,7 +117,7 @@ export default function CartScreen() {
   } = useCart();
 
   const isEmpty = items.length === 0;
-  const allSelected = items.length > 0 && items.every((i) => i.selected);
+  const allSelected = items.length > 0 && items.every((i) => i.selected === true);
   const [showRemoveToast, setShowRemoveToast] = useState(false);
   const removeToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -150,6 +151,11 @@ export default function CartScreen() {
 
   const handleBuyNow = () => {
     if (isEmpty) return;
+    const selectedCount = items.filter(item => item.selected === true).length;
+    if (selectedCount === 0) {
+      Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+      return;
+    }
     router.push('/checkout');
   };
 
@@ -160,21 +166,7 @@ export default function CartScreen() {
   return (
     <TabScreenWrapper>
       <View style={cartStyles.screen}>
-        <View style={{ flexShrink: 0 }}>
-          <AdaptiveHeader
-            variant="light"
-            title="Giỏ hàng của bạn"
-            left={
-            <TouchableOpacity
-              style={cartStyles.headerBack}
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chevron-back" size={24} color={COLORS.cartTextPrimary} />
-            </TouchableOpacity>
-          }
-          />
-        </View>
+        <CartHeader />
 
         {isEmpty ? (
           <ScrollView

@@ -11,6 +11,12 @@ export interface AddressDto {
   district: string;
   city: string;
   isPrimary: boolean;
+  provinceId?: number | null;
+  districtId?: number | null;
+  wardCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  addressNote?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +30,12 @@ export interface CreateAddressRequest {
   district: string;
   city: string;
   isPrimary?: boolean;
+  provinceId?: number;
+  districtId?: number;
+  wardCode?: string;
+  latitude?: number;
+  longitude?: number;
+  addressNote?: string;
 }
 
 export interface UpdateAddressRequest {
@@ -34,6 +46,12 @@ export interface UpdateAddressRequest {
   ward?: string;
   district?: string;
   city?: string;
+  provinceId?: number;
+  districtId?: number;
+  wardCode?: string;
+  latitude?: number;
+  longitude?: number;
+  addressNote?: string;
 }
 
 export interface ApiResponse<T> {

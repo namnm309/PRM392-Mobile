@@ -81,11 +81,6 @@ export function RoundedTabBar({
   navigation,
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const currentRoute = state.routes[state.index];
-  if (currentRoute?.name === 'cart') {
-    return null;
-  }
-
   const bottom = Math.max(insets.bottom, 4);
 
   return (
@@ -118,7 +113,11 @@ export function RoundedTabBar({
               canPreventDefault: true,
             });
             if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
+              if (route.name === 'profile') {
+                navigation.navigate(route.name, { screen: 'index' });
+              } else {
+                navigation.navigate(route.name, route.params);
+              }
             }
           };
 
