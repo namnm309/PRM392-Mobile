@@ -23,7 +23,7 @@ function formatPrice(v: number) {
 export default function ThankYouScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const { orderId, paymentSuccess } = useLocalSearchParams<{
     orderId: string;
     paymentSuccess?: string;
@@ -62,6 +62,15 @@ export default function ThankYouScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]); // Only depend on orderId, not getToken
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.replace({
+        pathname: '/(auth)/login',
+        params: { redirect: '/(tabs)/profile/orders' },
+      });
+    }
+  }, [isSignedIn, router]);
 
   const handleContinueShopping = () => {
     router.replace('/(tabs)/store');

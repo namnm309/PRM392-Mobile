@@ -1,61 +1,120 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  View,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { COLORS } from '@/constants/theme';
 
+const banners = [
+  require('@/assets/images/home/homebanner1.jpg'),
+  require('@/assets/images/home/homebanner2.jpg'),
+  require('@/assets/images/home/homebanner3.jpg'),
+  require('@/assets/images/home/homebanner4.jpg'),
+] as const;
+
 export function HomePromoBanner() {
+  const { width } = useWindowDimensions();
+  const horizontalPadding = 16;
+  const bannerWidth = width - horizontalPadding * 2; // ảnh nhỏ hơn một chút so với màn hình
+  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const indexRef = useRef(0);
+
+  useEffect(() => {
+    indexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+
+    const intervalId = setInterval(() => {
+      const nextIndex = (indexRef.current + 1) % banners.length;
+      scrollRef.current?.scrollTo({
+        x: nextIndex * width,
+        animated: true,
+      });
+      setActiveIndex(nextIndex);
+    }, 4000);
+
+    return () => clearInterval(intervalId);
+  }, [bannerWidth]);
+
+  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(offsetX / width);
+    if (newIndex !== activeIndex) {
+      setActiveIndex(newIndex);
+    }
+  };
+
   return (
-    <LinearGradient
-      colors={[COLORS.gradientPurple, COLORS.gradientRed]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <Text style={styles.title}>Năm Mới Máy Mới</Text>
-      <Text style={styles.subtitle}>
-        Giảm thêm <Text style={styles.highlight}>5%</Text> Tới{' '}
-        <Text style={styles.highlight}>1 triệu</Text>
-      </Text>
-      <TouchableOpacity style={styles.cta} activeOpacity={0.8}>
-        <Text style={styles.ctaText}>NHẬN NGAY</Text>
-      </TouchableOpacity>
-    </LinearGradient>
+    <View style={styles.container}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        contentContainerStyle={{
+          alignItems: 'center',
+        }}
+      >
+        {banners.map((source, index) => (
+          <View key={index} style={{ width }}>
+            <Image
+              source={source}
+              style={[styles.bannerImage, { width: bannerWidth, marginHorizontal: horizontalPadding }]}
+              resizeMode="contain"
+            />
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={styles.dotsRow}>
+        {banners.map((_, index) => {
+          const isActive = index === activeIndex;
+          return (
+            <View
+              key={index}
+              style={[styles.dot, isActive && styles.dotActive]}
+            />
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    marginHorizontal: 16,
-    marginVertical: 12,
+  container: {
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  bannerImage: {
+    height: 190,
     borderRadius: 16,
-    padding: 20,
+    alignSelf: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.white,
-    marginBottom: 6,
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 6,
   },
-  subtitle: {
-    fontSize: 15,
-    color: COLORS.white,
-    marginBottom: 16,
+  dot: {
+    height: 4,
+    borderRadius: 2,
+    width: 8,
+    backgroundColor: '#E5E7EB',
   },
-  highlight: {
-    fontWeight: '700',
-    color: COLORS.accentRed,
-  },
-  cta: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.promoRed,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-  ctaText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.white,
-    letterSpacing: 0.5,
+  dotActive: {
+    width: 18,
+    backgroundColor: COLORS.accentRed,
   },
 });
