@@ -54,25 +54,13 @@ export default function VnPayPaymentScreen() {
       try {
         const urlObj = new URL(url);
         const responseCode = urlObj.searchParams.get('vnp_ResponseCode');
-        const isSuccess = responseCode === '00';
-
-        if (isSuccess) {
-          router.replace({
-            pathname: '/thank-you',
-            params: { orderId, paymentSuccess: 'true' },
-          });
-        } else {
-          Alert.alert(
-            'Thanh toán thất bại',
-            'Giao dịch không thành công. Vui lòng thử lại.',
-            [
-              {
-                text: 'Quay lại',
-                onPress: () => router.back(),
-              },
-            ]
-          );
-        }
+        
+        // Don't decide success/fail here, let BE IPN decide
+        // Just redirect to thank-you and let it poll the order status
+        router.replace({
+          pathname: '/thank-you',
+          params: { orderId },
+        });
       } catch (error) {
         console.error('Error processing return URL:', error);
         processedRef.current = false;

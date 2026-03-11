@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/theme';
+import { API_BASE_URL } from '@/constants/api';
 import { accountStyles as styles } from '@/styles/account.styles';
 import {
   getMyOrders,
@@ -76,6 +77,40 @@ export default function OrdersScreen() {
         setOrders(data.items);
         setHasMore(data.hasNextPage);
         setPage(1);
+
+        // Auto-sync GHN status for shipping orders in background
+        const shippingOrders = data.items.filter(
+          (o: OrderDto) => 
+            (o.status === 'Confirmed' || o.status === 'Shipping') && 
+            o.ghnOrderCode
+        );
+        
+        if (shippingOrders.length > 0) {
+          const token = await getToken();
+          // Call API in background (don't block UI)
+          Promise.all(
+            shippingOrders.map((o: OrderDto) =>
+              fetch(`${API_BASE_URL}/api/Orders/${o.id}/ghn-status`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              }).catch(() => null) // Ignore errors for background sync
+            )
+          ).then(() => {
+            // Reload orders after sync (only if still mounted)
+            if (isMounted) {
+              getMyOrders(getToken, 1, 10).then(refreshedData => {
+                if (isMounted) {
+                  setOrders(refreshedData.items);
+                  setHasMore(refreshedData.hasNextPage);
+                }
+              }).catch(() => {
+                // Ignore errors for refresh after sync
+              });
+            }
+          });
+        }
       } catch (err: any) {
         if (isMounted) {
           setError(err.message || 'Không thể tải lịch sử đơn hàng');
@@ -121,6 +156,38 @@ export default function OrdersScreen() {
         },
       ]
     );
+  }, [getToken, fetchOrders]);
+
+  const handleCheckGhnStatus = useCallback(async (orderId: string) => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      const response = await fetch(
+        `${API_BASE_URL}/api/Orders/${orderId}/ghn-status`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Refresh orders list to show updated status
+        await fetchOrders(1, true);
+        Alert.alert(
+          'Trạng thái đơn hàng',
+          `Mã GHN: ${result.data.ghnOrderCode}\nTrạng thái GHN: ${result.data.ghnStatus}\nTrạng thái đơn: ${result.data.orderStatus}${result.data.statusChanged ? '\n✅ Đã cập nhật' : '\nℹ️ Không có thay đổi'}`
+        );
+      } else {
+        Alert.alert('Lỗi', result.message || 'Không thể lấy trạng thái');
+      }
+    } catch (err: any) {
+      Alert.alert('Lỗi', err.message || 'Không thể lấy trạng thái');
+    } finally {
+      setLoading(false);
+    }
   }, [getToken, fetchOrders]);
 
   const formatDate = (dateString: string): string => {
@@ -250,6 +317,15 @@ export default function OrdersScreen() {
                       </Text>
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {(order.status === 'Confirmed' || order.status === 'Shipping') && order.ghnOrderCode && (
+                        <TouchableOpacity
+                          style={[styles.cardButton, { borderColor: COLORS.primary }]}
+                          onPress={() => handleCheckGhnStatus(order.id)}
+                        >
+                          <Ionicons name="location-outline" size={16} color={COLORS.primary} />
+                          <Text style={[styles.cardButtonText, { color: COLORS.primary }]}>Tình trạng</Text>
+                        </TouchableOpacity>
+                      )}
                       {(order.status === 'Pending' || order.status === 'Processing') && (
                         <TouchableOpacity
                           style={[styles.cardButton, styles.cardButtonDanger]}
