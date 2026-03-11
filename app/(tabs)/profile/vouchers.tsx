@@ -77,7 +77,7 @@ export default function VouchersScreen() {
       <TabScreenWrapper>
         <View style={styles.loadingContainer}>
           <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.accentRed} />
           <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       </TabScreenWrapper>
@@ -127,7 +127,7 @@ export default function VouchersScreen() {
             style={styles.scrollView}
             contentContainerStyle={[styles.scrollViewContent, { paddingBottom: tabBarBottomPadding }]}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.accentRed]} />
             }
             showsVerticalScrollIndicator={false}
           >
@@ -136,7 +136,7 @@ export default function VouchersScreen() {
                 <View key={voucher.id} style={styles.card}>
                   <View style={styles.cardHeader}>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.cardTitle, { color: COLORS.primary, fontSize: 20 }]}>
+                      <Text style={[styles.cardTitle, { color: COLORS.accentRed, fontSize: 20 }]}>
                         {formatDiscount(voucher)}
                       </Text>
                       <Text style={styles.cardTitle}>{voucher.code}</Text>

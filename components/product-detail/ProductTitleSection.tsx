@@ -1,14 +1,16 @@
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { WishlistButton } from '@/components/WishlistButton';
 
 type ProductTitleSectionProps = {
+  productId: string;
   name: string;
   rating?: number;
 };
 
-export function ProductTitleSection({ name, rating }: ProductTitleSectionProps) {
+export function ProductTitleSection({ productId, name, rating }: ProductTitleSectionProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.name} numberOfLines={2}>
@@ -21,10 +23,15 @@ export function ProductTitleSection({ name, rating }: ProductTitleSectionProps) 
             <Text style={styles.ratingText}>{rating}/5</Text>
           </View>
         )}
-        <TouchableOpacity style={styles.wishlist} activeOpacity={0.7}>
-          <Ionicons name="heart-outline" size={22} color={COLORS.accentRed} />
+        <View style={styles.wishlist}>
+          <WishlistButton
+            productId={productId}
+            size={22}
+            color={COLORS.accentRed}
+            fetchInitial
+          />
           <Text style={styles.wishlistText}>Yêu thích</Text>
-        </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

@@ -82,7 +82,7 @@ export default function WishlistScreen() {
       <TabScreenWrapper>
         <View style={styles.loadingContainer}>
           <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.accentRed} />
           <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       </TabScreenWrapper>
@@ -119,7 +119,7 @@ export default function WishlistScreen() {
           }
           right={
             items.length > 0 ? (
-              <View style={{ backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <View style={{ backgroundColor: COLORS.accentRed, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
                 <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.white }}>{items.length}</Text>
               </View>
             ) : undefined
@@ -139,7 +139,7 @@ export default function WishlistScreen() {
             style={styles.scrollView}
             contentContainerStyle={[styles.scrollViewContent, { paddingBottom: tabBarBottomPadding }]}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.accentRed]} />
             }
             showsVerticalScrollIndicator={false}
           >
@@ -166,7 +166,7 @@ export default function WishlistScreen() {
                     </Text>
                     
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.primary }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.accentRed }}>
                         {formatPrice(item.isOnSale && item.productSalePrice ? item.productSalePrice : item.productPrice)}
                       </Text>
                       {item.isOnSale && item.productSalePrice && (

@@ -63,26 +63,28 @@ export default function Profile() {
     { label: 'Học sinh/Sinh viên', icon: 'school-outline' as const, onPress: () => {} },
   ];
 
+  const accentRed = COLORS.accentRed;
+
   const historyItems = [
-    { label: 'Lịch sử mua hàng', icon: 'document-text-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/orders') },
-    { label: 'Tra cứu bảo hành', icon: 'refresh-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
+    { label: 'Lịch sử mua hàng', icon: 'document-text-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/orders') },
+    { label: 'Tra cứu bảo hành', icon: 'refresh-outline' as const, iconColor: accentRed, onPress: () => {} },
   ];
 
   const promotionItems = [
-    { label: 'Hạng thành viên', icon: 'heart-outline' as const, iconColor: '#EF4444', onPress: () => router.push('/(tabs)/profile/membership') },
-    { label: 'Tech-edu', icon: 'school-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
+    { label: 'Hạng thành viên', icon: 'heart-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/membership') },
+    { label: 'Tech-edu', icon: 'school-outline' as const, iconColor: accentRed, onPress: () => {} },
   ];
 
   const accountItems = [
-    { label: 'Thông tin cá nhân', icon: 'person-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/edit') },
-    { label: 'Sổ địa chỉ', icon: 'location-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/addresses') },
-    { label: 'Liên kết tài khoản', icon: 'link-outline' as const, iconColor: COLORS.primary, onPress: () => router.push('/(tabs)/profile/linked-accounts') },
-    { label: 'Đổi mật khẩu', icon: 'lock-closed-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
+    { label: 'Thông tin cá nhân', icon: 'person-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/edit') },
+    { label: 'Sổ địa chỉ', icon: 'location-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/addresses') },
+    { label: 'Liên kết tài khoản', icon: 'link-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/linked-accounts') },
+    { label: 'Đổi mật khẩu', icon: 'lock-closed-outline' as const, iconColor: accentRed, onPress: () => {} },
   ];
 
   const otherItems = [
-    { label: 'Sản phẩm yêu thích', icon: 'heart-outline' as const, iconColor: '#EF4444', onPress: () => router.push('/(tabs)/profile/wishlist') },
-    { label: 'Tư vấn và hỗ trợ', icon: 'headset-outline' as const, iconColor: COLORS.primary, onPress: () => {} },
+    { label: 'Sản phẩm yêu thích', icon: 'heart-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/wishlist') },
+    { label: 'Tư vấn và hỗ trợ', icon: 'headset-outline' as const, iconColor: accentRed, onPress: () => {} },
     { label: 'Điều khoản sử dụng', icon: 'document-text-outline' as const, iconColor: COLORS.grey, onPress: () => {} },
   ];
 
@@ -193,7 +195,7 @@ export default function Profile() {
           <Ionicons
             name="information-circle"
             size={24}
-            color="#2563EB"
+            color={accentRed}
             style={styles.bannerIcon}
           />
           <Text style={styles.bannerText}>
@@ -238,11 +240,11 @@ export default function Profile() {
         {/* Dev: Copy token for Swagger */}
         {__DEV__ && (
           <TouchableOpacity
-            style={[styles.logoutButton, { backgroundColor: `${COLORS.primary}15`, marginBottom: 8 }]}
+            style={[styles.logoutButton, styles.devButton]}
             onPress={handleCopyTokenForSwagger}
           >
-            <Ionicons name="copy-outline" size={20} color={COLORS.primary} />
-            <Text style={[styles.logoutText, { color: COLORS.primary }]}>Copy token for Swagger</Text>
+            <Ionicons name="copy-outline" size={20} color={accentRed} />
+            <Text style={[styles.logoutText, { color: accentRed }]}>Copy token for Swagger</Text>
           </TouchableOpacity>
         )}
 

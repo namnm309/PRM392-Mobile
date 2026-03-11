@@ -102,7 +102,7 @@ export default function LinkedAccountsScreen() {
       <TabScreenWrapper>
         <View style={styles.loadingContainer}>
           <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.accentRed} />
           <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       </TabScreenWrapper>
@@ -146,7 +146,7 @@ export default function LinkedAccountsScreen() {
           style={styles.scrollView}
           contentContainerStyle={[styles.scrollViewContent, { paddingBottom: tabBarBottomPadding }]}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.accentRed]} />
           }
           showsVerticalScrollIndicator={false}
         >
@@ -217,11 +217,11 @@ export default function LinkedAccountsScreen() {
                       gap: 4,
                       paddingHorizontal: 12,
                       paddingVertical: 6,
-                      backgroundColor: `${COLORS.primary}15`,
+                      backgroundColor: `${COLORS.accentRed}15`,
                       borderRadius: 16,
                     }}>
-                      <Ionicons name="add" size={16} color={COLORS.primary} />
-                      <Text style={{ fontSize: 13, color: COLORS.primary, fontWeight: '600' }}>
+                      <Ionicons name="add" size={16} color={COLORS.accentRed} />
+                      <Text style={{ fontSize: 13, color: COLORS.accentRed, fontWeight: '600' }}>
                         Liên kết
                       </Text>
                     </View>

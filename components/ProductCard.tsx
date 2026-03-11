@@ -4,13 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native';
+import { WishlistButton } from '@/components/WishlistButton';
 
 function formatPrice(v: number) {
   return new Intl.NumberFormat('vi-VN').format(v) + '₫';
@@ -82,13 +83,12 @@ export function ProductCard({ product, width }: ProductCardProps) {
             <Text style={styles.ratingText}>{product.rating}</Text>
           </View>
         ) : null}
-        <TouchableOpacity
+        <WishlistButton
+          productId={product.id}
+          size={18}
+          color={COLORS.categoryLinkBlue}
           style={styles.wishlist}
-          activeOpacity={0.7}
-          onPress={() => {}}
-        >
-          <Ionicons name="heart-outline" size={18} color={COLORS.categoryLinkBlue} />
-        </TouchableOpacity>
+        />
       </View>
     </TouchableOpacity>
   );

@@ -94,7 +94,7 @@ export const styles = StyleSheet.create({
   statValueGreen: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.primary,
+    color: COLORS.accentRed,
     marginBottom: 2,
   },
   statLabel: {
@@ -112,7 +112,7 @@ export const styles = StyleSheet.create({
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#FFEBEE',
     marginHorizontal: 20,
     marginTop: 20,
     padding: 16,
@@ -134,7 +134,7 @@ export const styles = StyleSheet.create({
   bannerCtaText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2563EB',
+    color: COLORS.accentRed,
   },
   // Quick access row (4 items)
   quickAccessRow: {
@@ -199,6 +199,11 @@ export const styles = StyleSheet.create({
   menuItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  devButton: {
+    backgroundColor: `${COLORS.accentRed}15`,
+    borderColor: COLORS.accentRed,
+    marginBottom: 8,
   },
   // Logout Button
   logoutButton: {

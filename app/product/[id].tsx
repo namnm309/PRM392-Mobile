@@ -165,7 +165,7 @@ export default function ProductDetailScreen() {
           productName={product.name}
           brand={product.brand}
         />
-        <ProductTitleSection name={product.name} rating={product.rating} />
+        <ProductTitleSection productId={product.id} name={product.name} rating={product.rating} />
         {product.saleEndCountdown && (
           <SaleCountdownBanner countdown={product.saleEndCountdown} />
         )}

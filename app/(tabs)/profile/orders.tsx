@@ -210,7 +210,7 @@ export default function OrdersScreen() {
       <TabScreenWrapper>
         <View style={styles.loadingContainer}>
           <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.accentRed} />
           <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       </TabScreenWrapper>
@@ -260,7 +260,7 @@ export default function OrdersScreen() {
             style={styles.scrollView}
             contentContainerStyle={[styles.scrollViewContent, { paddingBottom: tabBarBottomPadding }]}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.accentRed]} />
             }
             showsVerticalScrollIndicator={false}
           >
@@ -312,18 +312,18 @@ export default function OrdersScreen() {
                   <View style={[styles.cardFooter, { justifyContent: 'space-between' }]}>
                     <View>
                       <Text style={{ fontSize: 13, color: COLORS.grey }}>Tổng tiền</Text>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.primary }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.accentRed }}>
                         {formatPrice(order.totalAmount)}
                       </Text>
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
                       {(order.status === 'Confirmed' || order.status === 'Shipping') && order.ghnOrderCode && (
                         <TouchableOpacity
-                          style={[styles.cardButton, { borderColor: COLORS.primary }]}
+                          style={[styles.cardButton, { borderColor: COLORS.accentRed }]}
                           onPress={() => handleCheckGhnStatus(order.id)}
                         >
-                          <Ionicons name="location-outline" size={16} color={COLORS.primary} />
-                          <Text style={[styles.cardButtonText, { color: COLORS.primary }]}>Tình trạng</Text>
+                          <Ionicons name="location-outline" size={16} color={COLORS.accentRed} />
+                          <Text style={[styles.cardButtonText, { color: COLORS.accentRed }]}>Tình trạng</Text>
                         </TouchableOpacity>
                       )}
                       {(order.status === 'Pending' || order.status === 'Processing') && (
@@ -347,7 +347,7 @@ export default function OrdersScreen() {
                   }}
                   onPress={() => fetchOrders(page + 1)}
                 >
-                  <Text style={{ fontSize: 14, color: COLORS.primary, fontWeight: '600' }}>
+                  <Text style={{ fontSize: 14, color: COLORS.accentRed, fontWeight: '600' }}>
                     Xem thêm
                   </Text>
                 </TouchableOpacity>
