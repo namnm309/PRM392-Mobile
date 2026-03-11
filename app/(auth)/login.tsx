@@ -2,8 +2,8 @@ import { COLORS } from "@/constants/theme";
 import { styles } from '@/styles/auth.styles';
 import { useSignIn, useSSO } from "@clerk/clerk-expo";
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from "expo-router";
-import React, { useState } from 'react';
+import { useRouter, useLocalSearchParams } from "expo-router";
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,11 +15,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startSSOFlow } = useSSO();
   const router = useRouter();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+
+  const destination = useMemo(
+    () => (typeof redirect === 'string' && redirect ? redirect : '/(tabs)/profile'),
+    [redirect],
+  );
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,7 +56,7 @@ export default function Login() {
       });
       if (result.status === 'complete' && result.createdSessionId && setActive) {
         await setActive({ session: result.createdSessionId });
-        router.replace("/(tabs)");
+        router.replace(destination);
       } else if (result.status === 'needs_second_factor') {
         setShowMfaStep(true);
         setMfaCode('');
@@ -85,7 +92,7 @@ export default function Login() {
       });
       if (attempt.status === 'complete' && attempt.createdSessionId) {
         await setActive({ session: attempt.createdSessionId });
-        router.replace("/(tabs)");
+        router.replace(destination);
       } else {
         setError('Xác minh chưa hoàn tất. Thử lại.');
       }
@@ -106,7 +113,7 @@ export default function Login() {
       const { createdSessionId, setActive: setActiveSession } = await startSSOFlow({ strategy: "oauth_google" });
       if (setActiveSession && createdSessionId) {
         await setActiveSession({ session: createdSessionId });
-        router.replace("/(tabs)");
+        router.replace(destination);
       }
     } catch (err) {
       console.error("OAuth error:", err);
@@ -120,12 +127,24 @@ export default function Login() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[styles.loginSection, styles.scrollContent]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.loginHeaderSafeArea}>
+          <View style={styles.loginHeader}>
+            <TouchableOpacity
+              onPress={() => router.replace('/(tabs)/profile')}
+              style={styles.loginHeaderBackButton}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-back" size={22} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[styles.loginSection, styles.scrollContent]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.brandSection}>
           <View style={styles.logoContainer}>
             <Ionicons name="hardware-chip" size={32} color={COLORS.primary} />
@@ -252,6 +271,7 @@ export default function Login() {
           By continuing, you agree to our Terms and Privacy Policy
         </Text>
       </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }

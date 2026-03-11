@@ -14,8 +14,10 @@ export default function InitialLayout() {
 
     const inAuthScreen = segments[0] === "(auth)";
 
-    if (!isSignedIn && !inAuthScreen) router.replace("/(auth)/login");
-    else if (isSignedIn && inAuthScreen) router.replace("/(tabs)");
+    // Nếu đã đăng nhập mà vẫn đang ở nhóm màn hình auth thì điều hướng sang tabs chính
+    if (isSignedIn && inAuthScreen) {
+      router.replace("/(tabs)");
+    }
   }, [isLoaded, isSignedIn, segments]);
 
   if (!isLoaded) return null;

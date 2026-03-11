@@ -50,21 +50,6 @@ export function ProductMediaGallery({
             )}
           </View>
         )}
-        {productName && (
-          <View style={styles.overlay}>
-            <View style={styles.brandLogo}>
-              <Text style={styles.brandLogoText}>S</Text>
-            </View>
-            <View style={styles.productInfo}>
-              <Text style={styles.productName} numberOfLines={2}>
-                {productName}
-              </Text>
-              {brand && (
-                <Text style={styles.brand}>{brand}</Text>
-              )}
-            </View>
-          </View>
-        )}
         {isVideo && (
           <View style={styles.youtubeButton}>
             <Ionicons name="logo-youtube" size={20} color={COLORS.white} />

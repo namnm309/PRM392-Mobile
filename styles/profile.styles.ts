@@ -94,7 +94,7 @@ export const styles = StyleSheet.create({
   statValueGreen: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.primary,
+    color: COLORS.background,
     marginBottom: 2,
   },
   statLabel: {
@@ -228,5 +228,59 @@ export const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     color: COLORS.grey,
+  },
+  // Guest (chưa đăng nhập)
+  guestWelcomeSection: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  guestWelcomeTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.background,
+    marginBottom: 8,
+  },
+  guestWelcomeSubtitle: {
+    fontSize: 14,
+    color: COLORS.grey,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  guestButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  guestPrimaryButton: {
+    flex: 1,
+    backgroundColor: COLORS.accentRed,
+    paddingVertical: 12,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestPrimaryButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  guestSecondaryButton: {
+    flex: 1,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.accentRed,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+  },
+  guestSecondaryButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.accentRed,
   },
 });
