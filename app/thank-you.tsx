@@ -88,6 +88,42 @@ export default function ThankYouScreen() {
     router.replace('/(tabs)/profile/orders');
   };
 
+  const handleRetryPayment = async () => {
+    if (!order) return;
+    try {
+      const { createVnPayUrl } = await import('@/lib/vnpayApi');
+      const paymentUrl = await createVnPayUrl(getToken, order.id);
+      const encodedUrl = encodeURIComponent(paymentUrl);
+      router.replace({
+        pathname: '/vnpay-payment',
+        params: { paymentUrl: encodedUrl, orderId: order.id },
+      });
+    } catch (error) {
+      console.error('Failed to create payment URL:', error);
+    }
+  };
+
+  // Check if order can be retried (within 24h and payment not successful)
+  const canRetryPayment = () => {
+    if (!order || order.paymentMethod !== 'Online') return false;
+    if (order.paymentStatus === 'Paid') return false;
+    
+    const createdAt = new Date(order.createdAt);
+    const now = new Date();
+    const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    
+    return hoursSinceCreation < 24 && 
+           (order.paymentStatus === 'Pending' || order.paymentStatus === 'Failed' || order.paymentStatus === 'ManualReview');
+  };
+
+  const getHoursRemaining = () => {
+    if (!order) return 0;
+    const createdAt = new Date(order.createdAt);
+    const now = new Date();
+    const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    return Math.max(0, 24 - hoursSinceCreation);
+  };
+
   return (
     <View style={styles.screen}>
       <AdaptiveHeader
@@ -121,11 +157,17 @@ export default function ThankYouScreen() {
             </View>
 
             <Text style={styles.title}>
-              {paymentSuccess === 'true' ? 'Thanh toán thành công!' : 'Đặt hàng thành công!'}
+              {order?.paymentStatus === 'Paid' 
+                ? 'Thanh toán thành công!' 
+                : order?.paymentMethod === 'Online'
+                ? 'Đang xử lý thanh toán'
+                : 'Đặt hàng thành công!'}
             </Text>
             <Text style={styles.subtitle}>
-              {paymentSuccess === 'true'
+              {order?.paymentStatus === 'Paid'
                 ? 'Thanh toán qua VNPAY đã hoàn tất. Đơn hàng của bạn đang được xử lý.'
+                : order?.paymentMethod === 'Online' && (order?.paymentStatus === 'Pending' || order?.paymentStatus === 'Failed')
+                ? 'Vui lòng đợi trong giây lát để hệ thống xác nhận thanh toán của bạn.'
                 : 'Cảm ơn bạn đã mua sắm tại TechStore. Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.'}
             </Text>
 
@@ -151,11 +193,22 @@ export default function ThankYouScreen() {
                     <Text style={styles.orderInfoLabel}>Thanh toán:</Text>
                     <Text style={[
                       styles.orderInfoValue,
-                      { color: paymentSuccess === 'true' || order.paymentStatus === 'Paid'
-                        ? '#22c55e' : COLORS.accentRed }
+                      { color: order.paymentStatus === 'Paid'
+                        ? '#22c55e' 
+                        : order.paymentStatus === 'Failed' 
+                        ? COLORS.accentRed
+                        : order.paymentStatus === 'ManualReview'
+                        ? '#f97316'
+                        : COLORS.grey }
                     ]}>
-                      {paymentSuccess === 'true' || order.paymentStatus === 'Paid'
+                      {order.paymentStatus === 'Paid'
                         ? 'Đã thanh toán qua VNPAY'
+                        : order.paymentStatus === 'Failed'
+                        ? 'Thanh toán thất bại'
+                        : order.paymentStatus === 'ManualReview'
+                        ? 'Đang kiểm tra'
+                        : order.paymentStatus === 'Expired'
+                        ? 'Hết hạn thanh toán'
                         : 'Chưa thanh toán'}
                     </Text>
                   </View>
@@ -189,6 +242,25 @@ export default function ThankYouScreen() {
                     </Text>
                   </View>
                 )}
+              </View>
+            )}
+
+            {order && canRetryPayment() && (
+              <View style={styles.retryPaymentContainer}>
+                <Text style={styles.retryPaymentTitle}>
+                  Thanh toán chưa hoàn tất
+                </Text>
+                <Text style={styles.retryPaymentSubtitle}>
+                  Bạn còn {Math.floor(getHoursRemaining())} giờ để hoàn tất thanh toán. Sau đó đơn hàng sẽ tự động hủy.
+                </Text>
+                <TouchableOpacity
+                  style={styles.retryPaymentButton}
+                  onPress={handleRetryPayment}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="card-outline" size={20} color={COLORS.white} />
+                  <Text style={styles.retryPaymentButtonText}>Thanh toán lại</Text>
+                </TouchableOpacity>
               </View>
             )}
 
@@ -323,5 +395,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: COLORS.accentRed,
+  },
+  retryPaymentContainer: {
+    width: '100%',
+    backgroundColor: '#fef3c7',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+    padding: 16,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  retryPaymentTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#92400e',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  retryPaymentSubtitle: {
+    fontSize: 13,
+    color: '#78350f',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  retryPaymentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: '#f59e0b',
+  },
+  retryPaymentButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.white,
   },
 });
