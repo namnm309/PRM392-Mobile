@@ -19,6 +19,7 @@ import { useCart } from '@/contexts/CartContext';
 import type { CartItem } from '@/contexts/CartContext';
 import { cartStyles } from '@/styles/cart.styles';
 import { COLORS } from '@/constants/theme';
+import { useAuth } from '@clerk/clerk-expo';
 
 function formatPrice(v: number) {
   return new Intl.NumberFormat('vi-VN').format(v) + '₫';
@@ -107,6 +108,7 @@ function CartItemRow({
 export default function CartScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isSignedIn } = useAuth();
   const {
     items,
     removeItem,
@@ -154,6 +156,13 @@ export default function CartScreen() {
     const selectedCount = items.filter(item => item.selected === true).length;
     if (selectedCount === 0) {
       Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+      return;
+    }
+    if (!isSignedIn) {
+      router.push({
+        pathname: '/(auth)/login',
+        params: { redirect: '/checkout' },
+      });
       return;
     }
     router.push('/checkout');

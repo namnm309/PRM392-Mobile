@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     height: 100,
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },

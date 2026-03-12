@@ -97,13 +97,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isSignedIn, getToken, mapCartItemDtoToCartItem]);
 
-  // Load cart on mount and when user signs in
+  // Load cart on mount when user signs in and clear once when signing out
   useEffect(() => {
     if (isSignedIn && !cartLoadedRef.current) {
       cartLoadedRef.current = true;
       loadCart();
-    } else if (!isSignedIn) {
-      // Clear cart when user signs out
+    } else if (!isSignedIn && cartLoadedRef.current) {
+      // Clear cart only once after user signs out
       setItems([]);
       cartLoadedRef.current = false;
     }

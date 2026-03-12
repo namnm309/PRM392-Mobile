@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useTabBarBottomPadding } from '@/hooks/useTabBarBottomPadding';
 import { CategoryHeader } from '@/components/CategoryHeader';
@@ -143,6 +145,24 @@ export default function CategoryScreen() {
                     }}
                     activeOpacity={0.7}
                   >
+                    {isSelected ? (
+                      <View style={styles.sidebarRedBar} />
+                    ) : null}
+                    <View style={styles.sidebarIconWrap}>
+                      {cat.imageUrl ? (
+                        <Image
+                          source={{ uri: cat.imageUrl }}
+                          style={styles.sidebarIcon}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Ionicons
+                          name="grid-outline"
+                          size={36}
+                          color={isSelected ? COLORS.accentRed : COLORS.categoryChipTextSecondary}
+                        />
+                      )}
+                    </View>
                     <Text
                       style={[
                         styles.sidebarText,
@@ -152,9 +172,6 @@ export default function CategoryScreen() {
                     >
                       {cat.name}
                     </Text>
-                    {isSelected ? (
-                      <View style={styles.sidebarUnderline} />
-                    ) : null}
                   </TouchableOpacity>
                 );
               })}
@@ -248,37 +265,49 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     width: SIDEBAR_WIDTH,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.categoryContentBg,
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: COLORS.categoryChipBorder,
   },
   sidebarItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 96,
+    position: 'relative',
   },
   sidebarItemSelected: {
+    backgroundColor: '#fff',
+  },
+  sidebarRedBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
     backgroundColor: COLORS.accentRed,
   },
+  sidebarIconWrap: {
+    width: 80,
+    height: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  sidebarIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+  },
   sidebarText: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.categoryChipTextSecondary,
     textAlign: 'center',
   },
   sidebarTextSelected: {
-    color: COLORS.white,
-    fontWeight: '500',
-  },
-  sidebarUnderline: {
-    position: 'absolute',
-    bottom: 4,
-    left: 12,
-    right: 12,
-    height: 2,
-    backgroundColor: COLORS.white,
-    borderRadius: 1,
+    color: COLORS.accentRed,
+    fontWeight: '600',
   },
   contentScroll: {
     flex: 1,
