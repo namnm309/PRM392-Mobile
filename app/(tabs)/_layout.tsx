@@ -4,8 +4,13 @@ import React from 'react';
 import { RoundedTabBar } from '@/components/RoundedTabBar';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from 'react-native';
+import { useCart } from '@/contexts/CartContext';
 
 export default function TabLayout() {
+  const { items } = useCart();
+  const cartCount = items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
+
   return (
     <Tabs
       tabBar={(props) => <RoundedTabBar {...props} />}
@@ -40,7 +45,18 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: 'Giỏ hàng',
-          tabBarIcon: ({ size, color }) => <Ionicons size={size} name="cart" color={color} />,
+          tabBarIcon: ({ size, color }) => (
+            <View style={styles.iconWrap}>
+              <Ionicons size={size} name="cart" color={color} />
+              {cartCount > 0 ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {cartCount > 99 ? '99+' : String(cartCount)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -53,3 +69,31 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrap: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    backgroundColor: COLORS.accentRed,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+});

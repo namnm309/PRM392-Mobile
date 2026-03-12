@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
 const CHECK_GREEN = '#4CAF50';
 const BOTTOM_BAR_OFFSET = 100;
@@ -27,7 +28,11 @@ export function AddToCartToast({ visible, onDismiss }: AddToCartToastProps) {
       style={[styles.wrapper, { bottom: bottomOffset }]}
       pointerEvents="box-none"
     >
-      <View style={styles.toast}>
+      <Animated.View
+        style={styles.toast}
+        entering={FadeInDown.duration(200)}
+        exiting={FadeOutDown.duration(160)}
+      >
         <View style={styles.checkCircle}>
           <Ionicons name="checkmark" size={20} color="#FFFFFF" />
         </View>
@@ -40,7 +45,7 @@ export function AddToCartToast({ visible, onDismiss }: AddToCartToastProps) {
         >
           <Ionicons name="close" size={22} color="#FFFFFF" />
         </Pressable>
-      </View>
+      </Animated.View>
     </View>
   );
 }

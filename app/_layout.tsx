@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import InitialLayout from '@/components/InitialLayout';
 import { CartProvider } from '@/contexts/CartContext';
+import { WishlistProvider } from '@/contexts/WishlistContext';
 import { COLORS } from '@/constants/theme';
 
 //Tạo biến để tải clerk key từ env.local ( chỉ có máy của mình)
@@ -21,9 +22,11 @@ export default function RootLayout() {
       <ClerkLoaded>
         <SafeAreaProvider>
           <CartProvider>
-            <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-              <InitialLayout />
-            </View>
+            <WishlistProvider>
+              <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+                <InitialLayout />
+              </View>
+            </WishlistProvider>
           </CartProvider>
         </SafeAreaProvider>
       </ClerkLoaded>

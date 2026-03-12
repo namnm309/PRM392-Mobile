@@ -1,49 +1,44 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS } from '@/constants/theme';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
-const CHECK_GREEN = '#4CAF50';
-const CART_FOOTER_OFFSET = 90;
+const BOTTOM_BAR_OFFSET = 100;
 
-type RemoveFromCartToastProps = {
+type WishlistToastProps = {
   visible: boolean;
+  message: string;
   onDismiss: () => void;
 };
 
-export function RemoveFromCartToast({ visible, onDismiss }: RemoveFromCartToastProps) {
+export function WishlistToast({ visible, message, onDismiss }: WishlistToastProps) {
   const insets = useSafeAreaInsets();
-  const bottomOffset = CART_FOOTER_OFFSET + Math.max(insets.bottom, 14) + 14;
+  const bottomOffset = BOTTOM_BAR_OFFSET + Math.max(insets.bottom, 12);
 
   if (!visible) return null;
 
   return (
-    <View
-      style={[styles.wrapper, { bottom: bottomOffset }]}
-      pointerEvents="box-none"
-    >
+    <View style={[styles.wrapper, { bottom: bottomOffset }]} pointerEvents="box-none">
       <Animated.View
         style={styles.toast}
-        entering={FadeInDown.duration(200)}
+        entering={FadeInDown.duration(180)}
         exiting={FadeOutDown.duration(160)}
       >
         <View style={styles.iconCircle}>
-          <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+          <Ionicons name="heart" size={18} color={COLORS.white} />
         </View>
-        <Text style={styles.message}>Xóa sản phẩm thành công</Text>
+        <Text style={styles.message} numberOfLines={2}>
+          {message}
+        </Text>
         <Pressable
           style={styles.closeBtn}
           onPress={onDismiss}
           hitSlop={12}
           accessibilityLabel="Đóng"
         >
-          <Ionicons name="close" size={22} color="#FFFFFF" />
+          <Ionicons name="close" size={22} color={COLORS.white} />
         </Pressable>
       </Animated.View>
     </View>
@@ -77,7 +72,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: CHECK_GREEN,
+    backgroundColor: COLORS.accentRed,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -86,9 +81,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   closeBtn: {
     padding: 4,
   },
 });
+

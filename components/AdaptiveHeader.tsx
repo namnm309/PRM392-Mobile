@@ -22,6 +22,8 @@ type AdaptiveHeaderProps = {
   transparent?: boolean;
   /** 'dark' = nền tối, chữ trắng (mặc định); 'light' = nền trắng, chữ đen */
   variant?: 'dark' | 'light';
+  /** Override background color for this header only */
+  backgroundColor?: string;
 };
 
 const LIGHT_BG = '#FFFFFF';
@@ -34,6 +36,7 @@ export function AdaptiveHeader({
   right,
   transparent = false,
   variant = 'dark',
+  backgroundColor,
 }: AdaptiveHeaderProps) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -57,6 +60,16 @@ export function AdaptiveHeader({
       }
     : !transparent && styles.withBackground;
 
+  const backgroundOverride =
+    backgroundColor && !transparent
+      ? {
+          backgroundColor,
+          borderBottomColor: 'transparent',
+          zIndex: 10,
+          elevation: 4,
+        }
+      : null;
+
   return (
     <View
       style={[
@@ -67,6 +80,7 @@ export function AdaptiveHeader({
           paddingHorizontal,
         },
         containerVariant,
+        backgroundOverride,
       ]}
     >
       <View style={[styles.row, { minHeight: HEADER_CONTENT_HEIGHT }]}>
@@ -96,7 +110,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   row: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
