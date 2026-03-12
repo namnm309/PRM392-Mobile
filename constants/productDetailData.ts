@@ -67,6 +67,7 @@ export type ProductDetail = HomeProduct & {
   questions: QuestionItem[];
   storeBranches: StoreBranch[];
   saleEndCountdown?: { days: number; hours: number; mins: number; secs: number };
+  stock?: number;
 };
 
 const DEFAULT_DETAIL: Omit<ProductDetail, keyof HomeProduct> = {
@@ -184,6 +185,7 @@ const DEFAULT_DETAIL: Omit<ProductDetail, keyof HomeProduct> = {
     },
   ],
   saleEndCountdown: { days: 21, hours: 20, mins: 55, secs: 43 },
+  stock: undefined,
 };
 
 const DEFAULT_PRODUCT: HomeProduct = {
@@ -196,7 +198,7 @@ const DEFAULT_PRODUCT: HomeProduct = {
   studentPrice: 31625000,
   specs: '256GB, Chip A19 Pro',
   rating: 5,
-  badgeSecondary: 'Sale Tết',
+  badgeSecondary: null,
 };
 
 function findProductById(id: string): HomeProduct | null {

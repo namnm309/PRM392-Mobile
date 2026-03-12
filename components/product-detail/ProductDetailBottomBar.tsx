@@ -18,6 +18,7 @@ type ProductDetailBottomBarProps = {
   priceOriginal: number;
   onAddToCart?: () => void;
   onBuyNow?: () => void;
+  inStock?: boolean;
 };
 
 export function ProductDetailBottomBar({
@@ -25,6 +26,7 @@ export function ProductDetailBottomBar({
   priceOriginal,
   onAddToCart,
   onBuyNow,
+  inStock = true,
 }: ProductDetailBottomBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 12);
@@ -38,21 +40,27 @@ export function ProductDetailBottomBar({
           <Text style={styles.priceCurrent}>{formatPrice(priceCurrent)}</Text>
         </View>
       </View>
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.buyBtn} activeOpacity={0.7} onPress={onBuyNow}>
-          <Text style={styles.buyText}>Mua ngay</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.cartBtn}
-          activeOpacity={0.7}
-          onPress={onAddToCart}
-        >
-          <View style={styles.cartIcons}>
-            <Ionicons name="cart" size={22} color={COLORS.accentRed} />
-            <Ionicons name="add" size={14} color={COLORS.accentRed} />
-          </View>
-        </TouchableOpacity>
-      </View>
+      {inStock ? (
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.buyBtn} activeOpacity={0.7} onPress={onBuyNow}>
+            <Text style={styles.buyText}>Mua ngay</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.cartBtn}
+            activeOpacity={0.7}
+            onPress={onAddToCart}
+          >
+            <View style={styles.cartIcons}>
+              <Ionicons name="cart" size={22} color={COLORS.accentRed} />
+              <Ionicons name="add" size={14} color={COLORS.accentRed} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.outOfStockWrap}>
+          <Text style={styles.outOfStockText}>Hết hàng</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -125,5 +133,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+  },
+  outOfStockWrap: {
+    marginTop: 4,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+  },
+  outOfStockText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#EF4444',
   },
 });

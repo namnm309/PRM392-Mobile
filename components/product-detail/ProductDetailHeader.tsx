@@ -25,11 +25,6 @@ export function ProductDetailHeader() {
 
   return (
     <View style={[styles.container, { paddingTop }]}>
-      <View style={styles.promoBanner}>
-        <Text style={styles.promoText}>
-          Trao Tết "ANt" deal ngập tràn - Chọn quà ngay!
-        </Text>
-      </View>
       <View style={styles.navBar}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -68,16 +63,6 @@ export function ProductDetailHeader() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
-  },
-  promoBanner: {
-    backgroundColor: COLORS.accentRed,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  promoText: {
-    fontSize: 12,
-    color: COLORS.white,
-    textAlign: 'center',
   },
   navBar: {
     flexDirection: 'row',
