@@ -1,7 +1,9 @@
 import type { HomeProduct } from '@/constants/homeProductData';
 import { COLORS } from '@/constants/theme';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import {
   Image,
@@ -11,7 +13,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { WishlistButton } from '@/components/WishlistButton';
 
 function formatPrice(v: number) {
   return new Intl.NumberFormat('vi-VN').format(v) + '₫';
@@ -24,8 +25,12 @@ type ProductCardProps = {
 
 export function ProductCard({ product, width }: ProductCardProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { isSignedIn } = useAuth();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = width ?? Math.min(180, (screenWidth - 16 * 2 - 12) / 2);
+  const wished = isWishlisted(product.id);
 
   return (
     <TouchableOpacity
@@ -83,12 +88,28 @@ export function ProductCard({ product, width }: ProductCardProps) {
             <Text style={styles.ratingText}>{product.rating}</Text>
           </View>
         ) : null}
-        <WishlistButton
-          productId={product.id}
-          size={18}
-          color={COLORS.categoryLinkBlue}
+        <TouchableOpacity
           style={styles.wishlist}
-        />
+          activeOpacity={0.7}
+          onPress={() => {
+            if (!isSignedIn) {
+              router.push({
+                pathname: '/(auth)/login',
+                params: { redirect: pathname ?? '/' },
+              });
+              return;
+            }
+            toggleWishlist(product.id).catch(() => {
+              // UI lỗi sẽ được context revert, tránh crash app
+            });
+          }}
+        >
+          <Ionicons
+            name={wished ? 'heart' : 'heart-outline'}
+            size={18}
+            color={COLORS.accentRed}
+          />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -96,7 +117,7 @@ export function ProductCard({ product, width }: ProductCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.cartBackground,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 10,
     borderWidth: 1,
@@ -138,7 +159,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     height: 100,
     borderRadius: 8,
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

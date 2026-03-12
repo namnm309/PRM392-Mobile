@@ -8,12 +8,8 @@ export default function Index() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (isSignedIn) {
-      router.replace("/(tabs)");
-    } else {
-      router.replace("/(auth)/login");
-    }
-  }, [isLoaded, isSignedIn, router]);
+    router.replace("/(tabs)");
+  }, [isLoaded, router]);
 
   if (!isLoaded) return null;
   return null;
