@@ -161,7 +161,7 @@ export default function AddressesScreen() {
       <TabScreenWrapper>
         <View style={styles.loadingContainer}>
           <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.accentRed} />
           <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       </TabScreenWrapper>
@@ -198,7 +198,7 @@ export default function AddressesScreen() {
           }
           right={
             <TouchableOpacity onPress={openAddModal} style={{ padding: 8 }}>
-              <Ionicons name="add" size={24} color={COLORS.primary} />
+              <Ionicons name="add" size={24} color={COLORS.accentRed} />
             </TouchableOpacity>
           }
         />
@@ -222,7 +222,7 @@ export default function AddressesScreen() {
             style={styles.scrollView}
             contentContainerStyle={[styles.scrollViewContent, { paddingBottom: tabBarBottomPadding + 80 }]}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.accentRed]} />
             }
             showsVerticalScrollIndicator={false}
           >
@@ -234,7 +234,7 @@ export default function AddressesScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <Text style={styles.cardTitle}>{address.recipientName}</Text>
                         {address.isPrimary && (
-                          <View style={[styles.cardBadge, { backgroundColor: COLORS.primary }]}>
+                          <View style={[styles.cardBadge, { backgroundColor: COLORS.accentRed }]}>
                             <Text style={styles.cardBadgeText}>Mặc định</Text>
                           </View>
                         )}
@@ -266,8 +266,8 @@ export default function AddressesScreen() {
                       style={[styles.cardButton, styles.cardButtonPrimary]}
                       onPress={() => openEditModal(address)}
                     >
-                      <Ionicons name="pencil-outline" size={16} color={COLORS.primary} />
-                      <Text style={[styles.cardButtonText, { color: COLORS.primary }]}>Sửa</Text>
+                      <Ionicons name="pencil-outline" size={16} color={COLORS.accentRed} />
+                      <Text style={[styles.cardButtonText, { color: COLORS.accentRed }]}>Sửa</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.cardButton, styles.cardButtonDanger]}

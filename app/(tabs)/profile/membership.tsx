@@ -86,7 +86,7 @@ export default function MembershipScreen() {
       <TabScreenWrapper>
         <View style={styles.loadingContainer}>
           <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.accentRed} />
           <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       </TabScreenWrapper>
@@ -237,7 +237,7 @@ export default function MembershipScreen() {
           style={styles.scrollView}
           contentContainerStyle={[styles.scrollViewContent, { paddingBottom: tabBarBottomPadding }]}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.accentRed]} />
           }
           showsVerticalScrollIndicator={false}
         >
@@ -247,14 +247,14 @@ export default function MembershipScreen() {
             <View style={styles.card}>
               <View style={styles.cardBody}>
                 <View style={styles.cardRow}>
-                  <Ionicons name="pricetag-outline" size={20} color={COLORS.primary} />
+                  <Ionicons name="pricetag-outline" size={20} color={COLORS.accentRed} />
                   <Text style={[styles.cardValue, { marginLeft: 12 }]}>
                     Giảm {membership.currentTier.discountPercent}% cho mỗi đơn hàng
                   </Text>
                 </View>
                 {membership.currentTier.benefits && (
                   <View style={styles.cardRow}>
-                    <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.primary} />
+                    <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.accentRed} />
                     <Text style={[styles.cardValue, { marginLeft: 12 }]}>
                       {membership.currentTier.benefits}
                     </Text>
@@ -356,7 +356,7 @@ export default function MembershipScreen() {
                         </Text>
                       </View>
                       {isCurrentTier && (
-                        <View style={[styles.cardBadge, { backgroundColor: COLORS.primary }]}>
+                        <View style={[styles.cardBadge, { backgroundColor: COLORS.accentRed }]}>
                           <Text style={styles.cardBadgeText}>Hiện tại</Text>
                         </View>
                       )}

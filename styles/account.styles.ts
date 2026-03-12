@@ -35,7 +35,7 @@ export const accountStyles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accentRed,
     borderRadius: 12,
   },
   retryButtonText: {
@@ -156,7 +156,7 @@ export const accountStyles = StyleSheet.create({
     gap: 4,
   },
   cardButtonPrimary: {
-    backgroundColor: `${COLORS.primary}15`,
+    backgroundColor: `${COLORS.accentRed}15`,
   },
   cardButtonDanger: {
     backgroundColor: '#FEE2E2',
@@ -172,7 +172,7 @@ export const accountStyles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accentRed,
     justifyContent: 'center',
     alignItems: 'center',
     ...Platform.select({
@@ -289,7 +289,7 @@ export const accountStyles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accentRed,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',

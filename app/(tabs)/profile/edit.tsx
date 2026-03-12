@@ -321,7 +321,7 @@ export default function ProfileEditScreen() {
   if (loading) {
     return (
       <View style={editStyles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={COLORS.accentRed} />
         <Text style={editStyles.loadingText}>Đang tải...</Text>
       </View>
     );
@@ -572,7 +572,7 @@ const editStyles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 12,
     paddingHorizontal: 24,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accentRed,
     borderRadius: 12,
   },
   retryButtonText: {
@@ -694,7 +694,7 @@ const editStyles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accentRed,
     borderRadius: 12,
   },
   datePickerDoneText: {
@@ -718,22 +718,22 @@ const editStyles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   genderOptionActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: `${COLORS.primary}20`,
+    borderColor: COLORS.accentRed,
+    backgroundColor: `${COLORS.accentRed}20`,
   },
   genderOptionText: {
     fontSize: 16,
     color: COLORS.background,
   },
   genderOptionTextActive: {
-    color: COLORS.primary,
+    color: COLORS.accentRed,
     fontWeight: '600',
   },
   saveButton: {
     marginTop: 24,
     paddingVertical: 16,
     borderRadius: 16,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accentRed,
     alignItems: 'center',
     justifyContent: 'center',
   },
