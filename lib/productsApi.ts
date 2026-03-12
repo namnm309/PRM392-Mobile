@@ -124,7 +124,8 @@ export function mapApiProductToProductDetail(
       ? api.description.slice(0, 80) + (api.description.length > 80 ? '...' : '')
       : undefined,
     imageUri: api.imageUrl ?? null,
-    badgeSecondary: api.isOnSale ? 'Sale Tết' : 'Trả góp 0%',
+    badgeSecondary: api.isOnSale ? null : 'Trả góp 0%',
+    stock: api.stock ?? 0,
     media,
     storageOptions: undefined,
     colorOptions: undefined,
@@ -159,6 +160,6 @@ export function mapApiProductToHomeProduct(apiProduct: ApiProduct): HomeProduct 
         (apiProduct.description.length > 80 ? '...' : '')
       : undefined,
     imageUri: apiProduct.imageUrl ?? null,
-    badgeSecondary: apiProduct.isOnSale ? 'Sale Tết' : 'Trả góp 0%',
+    badgeSecondary: apiProduct.isOnSale ? null : 'Trả góp 0%',
   };
 }

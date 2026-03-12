@@ -9,7 +9,7 @@ export type HomeProduct = {
   specs?: string;
   rating?: number;
   imageUri?: string | null;
-  badgeSecondary?: 'Sale Tết' | 'Trả góp 0%' | null;
+  badgeSecondary?: 'Trả góp 0%' | null;
 };
 
 export type ProductCategorySection = {
@@ -35,7 +35,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         studentPrice: 21990000,
         specs: 'CORE 5-210H RTX 3050, 16GB 512GB 16" WUXGA',
         rating: 4.8,
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
       {
         id: 'lp2',
@@ -47,7 +47,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         studentPrice: 19490000,
         specs: 'i5-13420H Intel UHD, 16GB 256GB 13.6" 2K',
         rating: 4.9,
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
       {
         id: 'lp3',
@@ -59,7 +59,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         studentPrice: 18990000,
         specs: 'Apple M2 8 nhân GPU, 16GB 256GB 13.6" 2K',
         rating: 5,
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
       {
         id: 'lp4',
@@ -100,7 +100,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         studentPrice: 12490000,
         specs: 'i3 12100F, RTX 3050, 8GB, 256GB, H610M-S',
         rating: 5,
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
     ],
   },
@@ -119,7 +119,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         studentPrice: 8065500,
         specs: '128GB, WiFi',
         rating: 4.8,
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
       {
         id: 'tb2',
@@ -190,7 +190,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         discountPercent: 30,
         studentPrice: 655500,
         specs: '14 ngày pin, Nhịp tim, Thông báo cuộc gọi',
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
     ],
   },
@@ -237,7 +237,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         discountPercent: 13,
         studentPrice: 6690000,
         specs: 'HDR10+, Dolby Audio, 43 inch 4K 60Hz',
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
       {
         id: 'tv2',
@@ -248,7 +248,7 @@ export const HOME_PRODUCT_SECTIONS: ProductCategorySection[] = [
         discountPercent: 16,
         studentPrice: 3790000,
         specs: 'Color Gamut, Dolby Audio, 32 inch HD 60Hz',
-        badgeSecondary: 'Sale Tết',
+        badgeSecondary: null,
       },
     ],
   },

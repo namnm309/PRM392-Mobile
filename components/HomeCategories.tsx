@@ -43,8 +43,8 @@ export function HomeCategories() {
       .then((data) => {
         if (!cancelled) setCategories(data.slice(0, MAX_ITEMS));
       })
-      .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Lỗi tải danh mục');
+      .catch(() => {
+        if (!cancelled) setError('Không thể tải danh mục');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

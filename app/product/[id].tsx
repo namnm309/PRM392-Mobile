@@ -101,6 +101,9 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!product) return;
+    if ((product.stock ?? 0) <= 0) {
+      return;
+    }
     addToCart({
       id: product.id,
       name: product.name,
@@ -115,6 +118,9 @@ export default function ProductDetailScreen() {
 
   const handleBuyNow = async () => {
     if (!product) return;
+    if ((product.stock ?? 0) <= 0) {
+      return;
+    }
     // Add to cart first
     await addToCart({
       id: product.id,
@@ -164,6 +170,9 @@ export default function ProductDetailScreen() {
     );
   }
 
+  const stock = product.stock ?? 0;
+  const inStock = stock > 0;
+
   return (
     <View style={styles.screen}>
       <ProductDetailHeader />
@@ -177,7 +186,12 @@ export default function ProductDetailScreen() {
           productName={product.name}
           brand={product.brand}
         />
-        <ProductTitleSection productId={product.id} name={product.name} rating={product.rating} />
+        <ProductTitleSection
+          productId={product.id}
+          name={product.name}
+          rating={product.rating}
+          inStock={inStock}
+        />
         {product.saleEndCountdown && (
           <SaleCountdownBanner countdown={product.saleEndCountdown} />
         )}
@@ -211,6 +225,7 @@ export default function ProductDetailScreen() {
         <ProductDetailBottomBar
           priceCurrent={product.priceCurrent}
           priceOriginal={product.priceOriginal}
+          inStock={inStock}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
         />
