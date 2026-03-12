@@ -41,6 +41,8 @@ type ApiResponse<T> = {
 export type FetchProductsParams = {
   categoryId?: string;
   brandId?: string;
+  // Optional client-side limit for number of products returned
+  limit?: number;
 };
 
 export async function fetchProducts(
@@ -63,7 +65,11 @@ export async function fetchProducts(
     throw new Error(json.message ?? 'Failed to fetch products');
   }
 
-  return json.data;
+  const data = json.data;
+  if (typeof params.limit === 'number' && params.limit > 0) {
+    return data.slice(0, params.limit);
+  }
+  return data;
 }
 
 export async function fetchProductById(

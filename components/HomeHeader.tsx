@@ -10,9 +10,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/theme';
+import { useRouter } from 'expo-router';
 
 export function HomeHeader() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const paddingTop =
     Platform.OS === 'android' && insets.top === 0
       ? (StatusBar.currentHeight ?? 24)
@@ -30,10 +32,14 @@ export function HomeHeader() {
           </View>
         </TouchableOpacity>
 
-        <View style={styles.searchWrapper}>
+        <TouchableOpacity
+          style={styles.searchWrapper}
+          activeOpacity={0.7}
+          onPress={() => router.push('/search')}
+        >
           <Ionicons name="search" size={20} color={iconColor} />
           <Text style={styles.searchPlaceholder}>Tìm kiếm</Text>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.bellButton} activeOpacity={0.7}>
           <Ionicons name="notifications-outline" size={24} color={iconColor} />
