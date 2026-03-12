@@ -114,6 +114,98 @@ export default function Profile() {
     </View>
   );
 
+  // Màn tài khoản khi chưa đăng nhập
+  if (!user) {
+    return (
+      <TabScreenWrapper>
+        <View style={styles.container}>
+          <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[
+              styles.scrollViewContent,
+              {
+                paddingTop: insets.top,
+                paddingBottom: tabBarBottomPadding,
+              },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.guestWelcomeSection}>
+              <Text style={styles.guestWelcomeTitle}>Chào mừng bạn đến với TechStore</Text>
+              <Text style={styles.guestWelcomeSubtitle}>
+                Đăng nhập để theo dõi đơn hàng, nhận ưu đãi và nhiều tiện ích khác.
+              </Text>
+              <View style={styles.guestButtonRow}>
+                <TouchableOpacity
+                  style={styles.guestPrimaryButton}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(auth)/login',
+                      params: { redirect: '/(tabs)/profile' },
+                    })
+                  }
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.guestPrimaryButtonText}>Đăng nhập</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.guestSecondaryButton}
+                  onPress={() => router.push('/(auth)/register')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.guestSecondaryButtonText}>Đăng ký</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {renderMenuSection('Lịch sử', historyItems.map(item => ({
+              ...item,
+              onPress: () =>
+                router.push({
+                  pathname: '/(auth)/login',
+                  params: { redirect: '/(tabs)/profile' },
+                }),
+            })))}
+
+            {renderMenuSection('Ưu đãi', promotionItems.map(item => ({
+              ...item,
+              onPress: () =>
+                router.push({
+                  pathname: '/(auth)/login',
+                  params: { redirect: '/(tabs)/profile' },
+                }),
+            })))}
+
+            {renderMenuSection('Tài khoản', accountItems.map(item => ({
+              ...item,
+              onPress: () =>
+                router.push({
+                  pathname: '/(auth)/login',
+                  params: { redirect: '/(tabs)/profile' },
+                }),
+            })))}
+
+            {renderMenuSection('Khác', otherItems.map(item => ({
+              ...item,
+              onPress: () =>
+                router.push({
+                  pathname: '/(auth)/login',
+                  params: { redirect: '/(tabs)/profile' },
+                }),
+            })))}
+
+            <View className="footer">
+              <View style={styles.footer}>
+                <Text style={styles.versionText}>Tech Store v1.0.0</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </TabScreenWrapper>
+    );
+  }
+
   return (
     <TabScreenWrapper>
       <View style={styles.container}>
@@ -169,7 +261,7 @@ export default function Profile() {
               <Ionicons
                 name="cart-outline"
                 size={24}
-                color={COLORS.background}
+                color={COLORS.accentRed}
                 style={styles.statIcon}
               />
               <Text style={styles.statValue}>9</Text>
@@ -180,7 +272,7 @@ export default function Profile() {
               <Ionicons
                 name="wallet-outline"
                 size={24}
-                color={COLORS.background}
+                color={COLORS.accentRed}
                 style={styles.statIcon}
               />
               <Text style={styles.statValueGreen}>1.979.000₫</Text>
@@ -217,7 +309,7 @@ export default function Profile() {
               <Ionicons
                 name={item.icon}
                 size={24}
-                color={COLORS.background}
+                color={COLORS.accentRed}
                 style={styles.quickAccessIcon}
               />
               <Text style={styles.quickAccessLabel}>{item.label}</Text>

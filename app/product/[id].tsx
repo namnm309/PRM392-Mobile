@@ -24,6 +24,7 @@ import {
   mapApiProductToProductDetail,
 } from '@/lib/productsApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuth } from '@clerk/clerk-expo';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -40,6 +41,7 @@ const TOAST_DURATION_MS = 2000;
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { isSignedIn } = useAuth();
   const { addToCart, selectOnly } = useCart();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +125,17 @@ export default function ProductDetailScreen() {
     });
     // Select only this product for checkout
     selectOnly(product.id);
-    // Navigate to checkout
+
+    // If chưa đăng nhập thì đưa sang màn login, đăng nhập xong quay lại checkout
+    if (!isSignedIn) {
+      router.push({
+        pathname: '/(auth)/login',
+        params: { redirect: '/checkout' },
+      });
+      return;
+    }
+
+    // Nếu đã đăng nhập thì đi thẳng sang checkout
     router.push('/checkout');
   };
 

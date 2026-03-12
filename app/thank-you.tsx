@@ -23,7 +23,7 @@ function formatPrice(v: number) {
 export default function ThankYouScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const { orderId, paymentSuccess } = useLocalSearchParams<{
     orderId: string;
     paymentSuccess?: string;
@@ -40,28 +40,54 @@ export default function ThankYouScreen() {
     }
     
     let isMounted = true;
+    let pollCount = 0;
+    const maxPolls = 10; // Poll tối đa 10 lần (20 giây)
     orderLoadedRef.current = true;
     
-    getOrderById(getToken, orderId)
-      .then((orderData) => {
-        if (isMounted) {
-          setOrder(orderData);
+    const fetchOrder = async () => {
+      try {
+        const orderData = await getOrderById(getToken, orderId);
+        
+        if (!isMounted) return;
+        
+        // Nếu là đơn Online và đang thanh toán VNPay thành công
+        if (paymentSuccess === 'true' && orderData.paymentMethod === 'Online') {
+          // Nếu PaymentStatus chưa phải Paid, tiếp tục poll
+          if (orderData.paymentStatus !== 'Paid' && pollCount < maxPolls) {
+            pollCount++;
+            console.log(`Polling order status... attempt ${pollCount}/${maxPolls}`);
+            setTimeout(fetchOrder, 2000); // Poll lại sau 2 giây
+            return;
+          }
         }
-      })
-      .catch(() => {
+        
+        setOrder(orderData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching order:', error);
         // Order might not be found, but we still show success
-      })
-      .finally(() => {
         if (isMounted) {
           setLoading(false);
         }
-      });
+      }
+    };
+    
+    fetchOrder();
     
     return () => {
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]); // Only depend on orderId, not getToken
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.replace({
+        pathname: '/(auth)/login',
+        params: { redirect: '/(tabs)/profile/orders' },
+      });
+    }
+  }, [isSignedIn, router]);
 
   const handleContinueShopping = () => {
     router.replace('/(tabs)/store');
@@ -199,11 +225,32 @@ export default function ThankYouScreen() {
                 <View style={styles.orderInfoRow}>
                   <Text style={styles.orderInfoLabel}>Trạng thái:</Text>
                   <Text style={styles.orderInfoValue}>
-                    {order.status === 'Pending' ? 'Đang chờ xử lý'
-                      : order.status === 'Processing' ? 'Đang xử lý'
-                      : order.status}
+                    {order.status === 'Pending'
+                      ? 'Đang chờ shop xác nhận'
+                      : order.status === 'Processing'
+                        ? 'Shop đã xác nhận, đang chuẩn bị giao / GHN đang xử lý'
+                        : order.status === 'Shipped'
+                          ? 'Đang giao hàng'
+                          : order.status === 'Delivered' || order.status === 'SUCCESS'
+                            ? 'Đã giao thành công'
+                            : order.status}
                   </Text>
                 </View>
+
+                {order.ghnOrderCode && (
+                  <View style={styles.orderInfoRow}>
+                    <Text style={styles.orderInfoLabel}>Mã vận đơn:</Text>
+                    <Text style={styles.orderInfoValue}>{order.ghnOrderCode}</Text>
+                  </View>
+                )}
+                {order.expectedDeliveryTime && (
+                  <View style={styles.orderInfoRow}>
+                    <Text style={styles.orderInfoLabel}>Dự kiến giao:</Text>
+                    <Text style={styles.orderInfoValue}>
+                      {new Date(order.expectedDeliveryTime).toLocaleDateString('vi-VN')}
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
 

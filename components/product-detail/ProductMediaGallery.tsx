@@ -50,21 +50,6 @@ export function ProductMediaGallery({
             )}
           </View>
         )}
-        {productName && (
-          <View style={styles.overlay}>
-            <View style={styles.brandLogo}>
-              <Text style={styles.brandLogoText}>S</Text>
-            </View>
-            <View style={styles.productInfo}>
-              <Text style={styles.productName} numberOfLines={2}>
-                {productName}
-              </Text>
-              {brand && (
-                <Text style={styles.brand}>{brand}</Text>
-              )}
-            </View>
-          </View>
-        )}
         {isVideo && (
           <View style={styles.youtubeButton}>
             <Ionicons name="logo-youtube" size={20} color={COLORS.white} />
@@ -123,20 +108,20 @@ export function ProductMediaGallery({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
   },
   mainMedia: {
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   mainImage: {
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
   },
   placeholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },

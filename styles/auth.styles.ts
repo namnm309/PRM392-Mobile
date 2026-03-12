@@ -7,7 +7,22 @@ const { width, height } = Dimensions.get("window");
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
+  },
+  loginHeaderSafeArea: {
+    backgroundColor: COLORS.accentRed,
+  },
+  loginHeader: {
+    width: "100%",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+    alignItems: "flex-start",
+  },
+  loginHeaderBackButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 999,
   },
   brandSection: {
     alignItems: "center",
@@ -18,7 +33,9 @@ export const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 18,
-    backgroundColor: "rgba(74, 222, 128, 0.15)",
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.accentRed,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
@@ -27,7 +44,7 @@ export const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: "700",
     fontFamily: "JetBrainsMono-Medium",
-    color: COLORS.primary,
+    color: COLORS.accentRed,
     letterSpacing: 0.5,
     marginBottom: 8,
   },
@@ -66,18 +83,18 @@ export const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.grey,
+    color: COLORS.cartTextSecondary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: COLORS.surfaceLight,
+    borderColor: COLORS.cartBorder,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: COLORS.white,
+    color: COLORS.cartTextPrimary,
     marginBottom: 16,
   },
   inputError: {
@@ -90,7 +107,7 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
   primaryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accentRed,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
@@ -101,7 +118,7 @@ export const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.background,
+    color: COLORS.white,
   },
   primaryButtonDisabled: {
     opacity: 0.6,
@@ -116,7 +133,7 @@ export const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: "#E5E7EB",
   },
   dividerText: {
     fontSize: 13,
@@ -137,7 +154,7 @@ export const styles = StyleSheet.create({
   link: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.primary,
+    color: COLORS.accentRed,
   },
   googleButton: {
     flexDirection: "row",
@@ -169,7 +186,7 @@ export const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.surface,
+    color: COLORS.cartTextPrimary,
   },
   termsText: {
     textAlign: "center",
@@ -180,19 +197,19 @@ export const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: COLORS.white,
+    color: COLORS.cartTextPrimary,
     marginBottom: 20,
     textAlign: "center",
   },
   otpInput: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: COLORS.surfaceLight,
+    borderColor: COLORS.cartBorder,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 20,
-    color: COLORS.white,
+    color: COLORS.cartTextPrimary,
     textAlign: "center",
     letterSpacing: 8,
     marginBottom: 16,

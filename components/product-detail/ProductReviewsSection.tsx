@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   barBg: {
     flex: 1,
     height: 8,
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     borderRadius: 4,
     overflow: 'hidden',
   },
