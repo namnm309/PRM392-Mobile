@@ -5,7 +5,7 @@ import { calculateShippingFee } from '@/lib/shippingApi';
 import { useCart } from '@/contexts/CartContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -33,10 +33,14 @@ export default function CheckoutScreen() {
   const { getToken, isSignedIn } = useAuth();
   const { items, reloadCart, updateQuantity, removeItem } = useCart();
 
-  const selectedItems = items.filter(item => item.selected === true);
-  const selectedSubtotal = selectedItems.reduce(
-    (sum, item) => sum + item.priceCurrent * item.quantity,
-    0
+  const selectedItems = useMemo(
+    () => items.filter((item) => item.selected === true),
+    [items]
+  );
+  const selectedSubtotal = useMemo(
+    () =>
+      selectedItems.reduce((sum, item) => sum + item.priceCurrent * item.quantity, 0),
+    [selectedItems]
   );
 
   const [loading, setLoading] = useState(false);
@@ -55,6 +59,7 @@ export default function CheckoutScreen() {
   const [shippingServiceId, setShippingServiceId] = useState<number | undefined>();
   const [loadingShipping, setLoadingShipping] = useState(false);
   const [shippingError, setShippingError] = useState<string | null>(null);
+  const lastShippingCalcKeyRef = useRef<string | null>(null);
 
   const totalAmount = selectedSubtotal + shippingFee;
   const selectedAddress = addresses.find(a => a.id === selectedAddressId);
@@ -104,44 +109,61 @@ export default function CheckoutScreen() {
     }, [getToken])
   );
 
+  const calculateFee = useCallback(
+    async (
+      address: AddressDto,
+      itemsForFee: typeof selectedItems = selectedItems,
+      subtotalForFee: number = selectedSubtotal
+    ) => {
+      // Avoid duplicate GHN calls for the same inputs
+      const totalWeight = itemsForFee.reduce((sum, item) => sum + item.quantity * 500, 0);
+      const weight = totalWeight > 0 ? totalWeight : 500;
+      const insuranceValue = Math.min(subtotalForFee, 5000000);
+      const calcKey = `${address.id}:${address.districtId}:${address.wardCode}:${weight}:${insuranceValue}`;
+      if (lastShippingCalcKeyRef.current === calcKey) return;
+      lastShippingCalcKeyRef.current = calcKey;
+
+      setLoadingShipping(true);
+      setShippingError(null);
+      try {
+        const fee = await calculateShippingFee({
+          toDistrictId: address.districtId!,
+          toWardCode: address.wardCode!,
+          weight,
+          insuranceValue,
+        });
+        setShippingFee(fee.total);
+        setShippingServiceId(undefined);
+      } catch (err) {
+        console.error('Shipping fee error:', err);
+        setShippingError('Không thể tính phí vận chuyển. Vui lòng thử lại.');
+        setShippingFee(0);
+        // Allow retry on next render / change
+        lastShippingCalcKeyRef.current = null;
+      } finally {
+        setLoadingShipping(false);
+      }
+    },
+    [selectedItems, selectedSubtotal]
+  );
+
   // Calculate shipping fee when address changes or items change
   useEffect(() => {
     if (!selectedAddressId) {
       setShippingFee(0);
       setShippingError(null);
+      lastShippingCalcKeyRef.current = null;
       return;
     }
     const address = addresses.find(a => a.id === selectedAddressId);
     if (!address?.districtId || !address?.wardCode) {
       setShippingFee(0);
       setShippingError('Địa chỉ chưa có mã vùng GHN. Vui lòng cập nhật địa chỉ.');
+      lastShippingCalcKeyRef.current = null;
       return;
     }
     calculateFee(address, selectedItems, selectedSubtotal);
-  }, [selectedAddressId, addresses, items, calculateFee, selectedItems, selectedSubtotal]);
-
-  const calculateFee = async (address: AddressDto, itemsForFee = selectedItems, subtotalForFee = selectedSubtotal) => {
-    setLoadingShipping(true);
-    setShippingError(null);
-    try {
-      const totalWeight = itemsForFee.reduce((sum, item) => sum + item.quantity * 500, 0);
-      const insuranceValue = Math.min(subtotalForFee, 5000000);
-      const fee = await calculateShippingFee({
-        toDistrictId: address.districtId!,
-        toWardCode: address.wardCode!,
-        weight: totalWeight > 0 ? totalWeight : 500,
-        insuranceValue,
-      });
-      setShippingFee(fee.total);
-      setShippingServiceId(undefined);
-    } catch (err) {
-      console.error('Shipping fee error:', err);
-      setShippingError('Không thể tính phí vận chuyển. Vui lòng thử lại.');
-      setShippingFee(0);
-    } finally {
-      setLoadingShipping(false);
-    }
-  };
+  }, [selectedAddressId, addresses, calculateFee, selectedItems, selectedSubtotal]);
 
   useEffect(() => {
     if (!isSignedIn) {

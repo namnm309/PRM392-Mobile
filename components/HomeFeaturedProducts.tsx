@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     fontSize: 14,
-    color: COLORS.categoryLinkBlue,
+    color: COLORS.accentRed,
     fontWeight: '500',
   },
   chipsScroll: {
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     height: 100,
     borderRadius: 8,
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

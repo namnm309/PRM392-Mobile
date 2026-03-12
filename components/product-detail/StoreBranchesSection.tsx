@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   mapButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
