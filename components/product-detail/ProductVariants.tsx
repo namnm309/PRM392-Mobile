@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   colorImage: {
     height: 60,
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',

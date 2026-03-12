@@ -108,20 +108,20 @@ export function ProductMediaGallery({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
   },
   mainMedia: {
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   mainImage: {
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
   },
   placeholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -60,12 +60,11 @@ export function HomePromoBanner() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleMomentumScrollEnd}
-        contentContainerStyle={{
-          alignItems: 'center',
-        }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
         {banners.map((source, index) => (
-          <View key={index} style={{ width }}>
+          <View key={index} style={[styles.page, { width }]}>
             <Image
               source={source}
               style={[styles.bannerImage, { width: bannerWidth, marginHorizontal: horizontalPadding }]}
@@ -94,11 +93,22 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 8,
     marginBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  scrollView: {
+    backgroundColor: 'transparent',
+  },
+  scrollContent: {
+    alignItems: 'center',
+  },
+  page: {
+    backgroundColor: 'transparent',
   },
   bannerImage: {
     height: 190,
     borderRadius: 16,
     alignSelf: 'center',
+    backgroundColor: 'transparent',
   },
   dotsRow: {
     flexDirection: 'row',

@@ -94,12 +94,12 @@ export function HomeCategories() {
                     <Image
                       source={{ uri: cat.imageUrl }}
                       style={styles.iconImage}
-                      resizeMode="contain"
+                      resizeMode="cover"
                     />
                   ) : (
                     <Ionicons
                       name={getIconForCategory(cat.name)}
-                      size={24}
+                      size={28}
                       color={COLORS.headerBlue}
                     />
                   )}
@@ -142,14 +142,15 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: COLORS.categoryContentBg,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
   },
   iconImage: {
-    width: 32,
-    height: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
   },
   label: {
     fontSize: 11,

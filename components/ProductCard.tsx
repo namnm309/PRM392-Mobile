@@ -87,7 +87,7 @@ export function ProductCard({ product, width }: ProductCardProps) {
           activeOpacity={0.7}
           onPress={() => {}}
         >
-          <Ionicons name="heart-outline" size={18} color={COLORS.categoryLinkBlue} />
+          <Ionicons name="heart-outline" size={18} color={COLORS.accentRed} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     height: 100,
     borderRadius: 8,
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

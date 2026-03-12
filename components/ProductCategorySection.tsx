@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     fontSize: 14,
-    color: COLORS.categoryLinkBlue,
+    color: COLORS.accentRed,
     fontWeight: '500',
   },
   chipsScroll: {

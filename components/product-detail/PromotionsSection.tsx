@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   snewGift: {
-    backgroundColor: COLORS.categoryContentBg,
+    backgroundColor: COLORS.white,
     padding: 12,
     borderRadius: 8,
   },
