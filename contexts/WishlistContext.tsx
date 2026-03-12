@@ -82,9 +82,9 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       toggleInFlightRef.current = new Set();
       return;
     }
-    // Load once after sign-in
+    // Load once after sign-in. Không đưa refreshWishlist vào deps để tránh lặp vô hạn
     refreshWishlist();
-  }, [isSignedIn, refreshWishlist]);
+  }, [isSignedIn]);
 
   const isWishlisted = useCallback(
     (productId: string) => wishlistProductIds.has(productId),

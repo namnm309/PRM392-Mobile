@@ -149,17 +149,21 @@ export default function WishlistScreen() {
                   key={item.id}
                   style={[styles.card, { flexDirection: 'row' }]}
                   activeOpacity={0.7}
+                  onPress={() => router.push({ pathname: '/product/[id]', params: { id: item.productId } })}
                 >
-                  <Image
-                    source={{ uri: item.productImageUrl || 'https://via.placeholder.com/100' }}
-                    style={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: 8,
-                      marginRight: 12,
-                      backgroundColor: '#F3F4F6',
-                    }}
-                  />
+                  <View style={{ width: 100, height: 100, borderRadius: 8, marginRight: 12, backgroundColor: COLORS.white, overflow: 'hidden' }}>
+                    {item.productImageUrl ? (
+                      <Image
+                        source={{ uri: item.productImageUrl }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3F4F6' }}>
+                        <Text style={{ fontSize: 32 }}>📦</Text>
+                      </View>
+                    )}
+                  </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 15, fontWeight: '500', color: COLORS.background, marginBottom: 4 }} numberOfLines={2}>
                       {item.productName}
@@ -180,30 +184,17 @@ export default function WishlistScreen() {
                       )}
                     </View>
 
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <View style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}>
-                        <View style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: 4,
-                          backgroundColor: item.isAvailable && item.stock > 0 ? '#10B981' : '#EF4444',
-                        }} />
-                        <Text style={{ fontSize: 12, color: item.isAvailable && item.stock > 0 ? '#10B981' : '#EF4444' }}>
-                          {item.isAvailable && item.stock > 0 ? `Còn ${item.stock} sản phẩm` : 'Hết hàng'}
-                        </Text>
-                      </View>
-                      
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}>
                       <TouchableOpacity
                         style={{
                           padding: 8,
                           borderRadius: 20,
                           backgroundColor: '#FEE2E2',
                         }}
-                        onPress={() => handleRemove(item.productId, item.productName)}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleRemove(item.productId, item.productName);
+                        }}
                       >
                         <Ionicons name="heart-dislike-outline" size={20} color="#EF4444" />
                       </TouchableOpacity>

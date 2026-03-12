@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     paddingRight: 32,
   },
   productCard: {
-    backgroundColor: COLORS.cartBackground,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 10,
     borderWidth: 1,
