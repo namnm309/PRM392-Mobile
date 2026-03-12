@@ -12,6 +12,7 @@ import { ProductVariants } from '@/components/product-detail/ProductVariants';
 import { PromotionsSection } from '@/components/product-detail/PromotionsSection';
 import { QASection } from '@/components/product-detail/QASection';
 import { RelatedNewsSection } from '@/components/product-detail/RelatedNewsSection';
+import { RelatedProductsSection } from '@/components/product-detail/RelatedProductsSection';
 import { SaleCountdownBanner } from '@/components/product-detail/SaleCountdownBanner';
 import { StoreBranchesSection } from '@/components/product-detail/StoreBranchesSection';
 import { TechSpecsSection } from '@/components/product-detail/TechSpecsSection';
@@ -212,6 +213,10 @@ export default function ProductDetailScreen() {
         {product.reviews.totalReviews > 0 && (
           <ProductReviewsSection reviews={product.reviews} />
         )}
+        <RelatedProductsSection
+          categoryId={product.categoryId}
+          currentProductId={product.id}
+        />
         <RelatedNewsSection news={product.relatedNews} />
         <AskQuestionSection />
         <QASection questions={product.questions} />

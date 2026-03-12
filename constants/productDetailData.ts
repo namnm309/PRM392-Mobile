@@ -57,6 +57,8 @@ export type ProductDetail = HomeProduct & {
   tradeInPrice?: number;
   specsList: ProductSpec[];
   features: string[];
+  categoryId?: string | null;
+  categoryName?: string | null;
   reviews: {
     rating: number;
     totalReviews: number;
@@ -120,6 +122,8 @@ const DEFAULT_DETAIL: Omit<ProductDetail, keyof HomeProduct> = {
     'Chip A19 Pro với tản nhiệt hơi nước hiệu năng mạnh mẽ nhất từ trước đến nay duy trì ổn định hơn đến 40%',
     'Thời lượng pin đột phá xem video liên tục đến 31 giờ và sạc nhanh 50% chỉ trong 20 phút',
   ],
+  categoryId: null,
+  categoryName: null,
   reviews: {
     rating: 5,
     totalReviews: 9,

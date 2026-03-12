@@ -132,6 +132,8 @@ export function mapApiProductToProductDetail(
     imageUri: api.imageUrl ?? null,
     badgeSecondary: api.isOnSale ? null : 'Trả góp 0%',
     stock: api.stock ?? 0,
+    categoryId: api.categoryId ?? api.category?.id ?? null,
+    categoryName: api.category?.name ?? null,
     media,
     storageOptions: undefined,
     colorOptions: undefined,
