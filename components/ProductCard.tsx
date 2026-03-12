@@ -1,10 +1,10 @@
-import type { HomeProduct } from '@/constants/homeProductData';
-import { COLORS } from '@/constants/theme';
-import { useWishlist } from '@/contexts/WishlistContext';
-import { useAuth } from '@clerk/clerk-expo';
-import { Ionicons } from '@expo/vector-icons';
-import { usePathname, useRouter } from 'expo-router';
-import React from 'react';
+import type { HomeProduct } from "@/constants/homeProductData";
+import { COLORS } from "@/constants/theme";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { useAuth } from "@clerk/clerk-expo";
+import { Ionicons } from "@expo/vector-icons";
+import { usePathname, useRouter } from "expo-router";
+import React from "react";
 import {
   Image,
   StyleSheet,
@@ -12,10 +12,10 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
-} from 'react-native';
+} from "react-native";
 
 function formatPrice(v: number) {
-  return new Intl.NumberFormat('vi-VN').format(v) + '₫';
+  return new Intl.NumberFormat("vi-VN").format(v) + "₫";
 }
 
 type ProductCardProps = {
@@ -35,7 +35,9 @@ export function ProductCard({ product, width }: ProductCardProps) {
   return (
     <TouchableOpacity
       style={[styles.card, { width: cardWidth }]}
-      onPress={() => router.push({ pathname: '/product/[id]', params: { id: product.id } })}
+      onPress={() =>
+        router.push({ pathname: "/product/[id]", params: { id: product.id } })
+      }
       activeOpacity={0.8}
     >
       {product.discountPercent > 0 ? (
@@ -47,33 +49,38 @@ export function ProductCard({ product, width }: ProductCardProps) {
         <View
           style={[
             styles.badgeSecondary,
-            product.badgeSecondary === 'Trả góp 0%' && styles.badgeSecondaryBlue,
+            product.badgeSecondary === "Trả góp 0%" &&
+              styles.badgeSecondaryBlue,
           ]}
         >
-          <Text style={styles.badgeSecondaryText}>{product.badgeSecondary}</Text>
+          <Text style={styles.badgeSecondaryText}>
+            {product.badgeSecondary}
+          </Text>
         </View>
       ) : null}
 
       <View style={styles.imagePlaceholder}>
         {product.imageUri ? (
-          <Image source={{ uri: product.imageUri }} style={styles.image} resizeMode="contain" />
+          <Image
+            source={{ uri: product.imageUri }}
+            style={styles.image}
+            resizeMode="contain"
+          />
         ) : (
           <Text style={styles.imagePlaceholderText}>📦</Text>
         )}
       </View>
 
-      {product.specs ? (
-        <Text style={styles.specs} numberOfLines={2}>
-          {product.specs}
-        </Text>
-      ) : null}
-
       <Text style={styles.productName} numberOfLines={2}>
         {product.name}
       </Text>
 
-      <Text style={styles.priceCurrent}>{formatPrice(product.priceCurrent)}</Text>
-      <Text style={styles.priceOriginal}>{formatPrice(product.priceOriginal)}</Text>
+      <Text style={styles.priceCurrent}>
+        {formatPrice(product.priceCurrent)}
+      </Text>
+      <Text style={styles.priceOriginal}>
+        {formatPrice(product.priceOriginal)}
+      </Text>
 
       {product.studentPrice != null ? (
         <Text style={styles.studentPrice}>
@@ -94,8 +101,8 @@ export function ProductCard({ product, width }: ProductCardProps) {
           onPress={() => {
             if (!isSignedIn) {
               router.push({
-                pathname: '/(auth)/login',
-                params: { redirect: pathname ?? '/' },
+                pathname: "/(auth)/login",
+                params: { redirect: pathname ?? "/" },
               });
               return;
             }
@@ -105,7 +112,7 @@ export function ProductCard({ product, width }: ProductCardProps) {
           }}
         >
           <Ionicons
-            name={wished ? 'heart' : 'heart-outline'}
+            name={wished ? "heart" : "heart-outline"}
             size={18}
             color={COLORS.accentRed}
           />
@@ -124,7 +131,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.cartBorder,
   },
   badgeDiscount: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     left: 8,
     backgroundColor: COLORS.accentRed,
@@ -135,14 +142,14 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.white,
   },
   badgeSecondary: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: '#FFB74D',
+    backgroundColor: "#FFB74D",
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 6,
@@ -153,20 +160,20 @@ const styles = StyleSheet.create({
   },
   badgeSecondaryText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.white,
   },
   imagePlaceholder: {
     height: 100,
     borderRadius: 8,
     backgroundColor: COLORS.white,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 8,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 8,
   },
   imagePlaceholderText: {
@@ -181,17 +188,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.cartTextPrimary,
     marginBottom: 4,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   priceCurrent: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.accentRed,
   },
   priceOriginal: {
     fontSize: 12,
     color: COLORS.grey,
-    textDecorationLine: 'line-through',
+    textDecorationLine: "line-through",
     marginTop: 2,
   },
   studentPrice: {
@@ -200,14 +207,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 8,
   },
   rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 2,
   },
   ratingText: {

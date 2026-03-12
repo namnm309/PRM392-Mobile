@@ -1,9 +1,11 @@
 import type { ProductMediaItem } from '@/constants/productDetailData';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  Animated,
   Image,
+  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,43 +28,95 @@ export function ProductMediaGallery({
   const [activeIndex, setActiveIndex] = useState(0);
   const { width } = useWindowDimensions();
   const mainSize = width;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const goToIndex = (nextIndex: number) => {
+    const clamped = Math.max(0, Math.min(nextIndex, media.length - 1));
+    if (clamped === activeIndex) return;
+    const direction = clamped > activeIndex ? 1 : -1;
+    slideAnim.setValue(direction * 40);
+    setActiveIndex(clamped);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const activeItem = media[activeIndex] ?? media[0];
   const isVideo = activeItem?.type === 'video';
   const hasImageUri = !isVideo && activeItem?.uri;
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, gestureState) =>
+        Math.abs(gestureState.dx) > 5,
+      onPanResponderRelease: (_evt, gestureState) => {
+        if (gestureState.dx > 40) {
+          // swipe right -> previous
+          goToIndex(activeIndex - 1);
+        } else if (gestureState.dx < -40) {
+          // swipe left -> next
+          goToIndex(activeIndex + 1);
+        }
+      },
+    })
+  ).current;
+
   return (
     <View style={styles.container}>
-      <View style={[styles.mainMedia, { width: mainSize, height: mainSize * 0.9 }]}>
-        {hasImageUri ? (
-          <Image
-            source={{ uri: activeItem.uri }}
-            style={[styles.mainImage, { width: mainSize, height: mainSize * 0.9 }]}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderEmoji}>{isVideo ? '▶️' : '📱'}</Text>
-            {isVideo && (
-              <View style={styles.playButton}>
-                <Ionicons name="play" size={48} color={COLORS.white} />
-              </View>
-            )}
-          </View>
-        )}
+      <View
+        style={[styles.mainMedia, { width: mainSize, height: mainSize * 0.9 }]}
+        {...panResponder.panHandlers}
+      >
+        <Animated.View
+          style={{
+            width: mainSize,
+            height: mainSize * 0.9,
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [{ translateX: slideAnim }],
+          }}
+        >
+          {hasImageUri ? (
+            <Image
+              source={{ uri: activeItem.uri }}
+              style={[styles.mainImage, { width: mainSize, height: mainSize * 0.9 }]}
+              resizeMode="contain"
+            />
+          ) : (
+            <View style={styles.placeholder}>
+              <Text style={styles.placeholderEmoji}>{isVideo ? '▶️' : '📱'}</Text>
+              {isVideo && (
+                <View style={styles.playButton}>
+                  <Ionicons name="play" size={48} color={COLORS.white} />
+                </View>
+              )}
+            </View>
+          )}
+        </Animated.View>
         {isVideo && (
           <View style={styles.youtubeButton}>
             <Ionicons name="logo-youtube" size={20} color={COLORS.white} />
             <Text style={styles.youtubeText}>Watch on YouTube</Text>
           </View>
         )}
-        {media.length > 1 && (
+        {media.length > 1 && activeIndex > 0 && (
           <TouchableOpacity
-            style={styles.nextArrow}
-            onPress={() => setActiveIndex((i) => Math.min(i + 1, media.length - 1))}
+            style={styles.prevArrow}
+            onPress={() => goToIndex(activeIndex - 1)}
             activeOpacity={0.7}
           >
-            <Ionicons name="chevron-forward" size={24} color={COLORS.white} />
+            <Ionicons name="chevron-back" size={18} color={COLORS.white} />
+          </TouchableOpacity>
+        )}
+        {media.length > 1 && activeIndex < media.length - 1 && (
+          <TouchableOpacity
+            style={styles.nextArrow}
+            onPress={() => goToIndex(activeIndex + 1)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-forward" size={18} color={COLORS.white} />
           </TouchableOpacity>
         )}
       </View>
@@ -79,7 +133,7 @@ export function ProductMediaGallery({
               styles.thumb,
               activeIndex === index && styles.thumbActive,
             ]}
-            onPress={() => setActiveIndex(index)}
+            onPress={() => goToIndex(index)}
             activeOpacity={0.7}
           >
             <View style={styles.thumbContent}>
@@ -184,14 +238,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.white,
   },
+  prevArrow: {
+    position: 'absolute',
+    left: 12,
+    top: '50%',
+    marginTop: -16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   nextArrow: {
     position: 'absolute',
     right: 12,
     top: '50%',
-    marginTop: -20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    marginTop: -16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
