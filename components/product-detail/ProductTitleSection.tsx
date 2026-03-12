@@ -1,14 +1,24 @@
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@clerk/clerk-expo';
+import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 type ProductTitleSectionProps = {
+  productId: string;
   name: string;
   rating?: number;
 };
 
-export function ProductTitleSection({ name, rating }: ProductTitleSectionProps) {
+export function ProductTitleSection({ productId, name, rating }: ProductTitleSectionProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isSignedIn } = useAuth();
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const wished = isWishlisted(productId);
+
   return (
     <View style={styles.container}>
       <Text style={styles.name} numberOfLines={2}>
@@ -21,9 +31,30 @@ export function ProductTitleSection({ name, rating }: ProductTitleSectionProps) 
             <Text style={styles.ratingText}>{rating}/5</Text>
           </View>
         )}
-        <TouchableOpacity style={styles.wishlist} activeOpacity={0.7}>
-          <Ionicons name="heart-outline" size={22} color={COLORS.accentRed} />
-          <Text style={styles.wishlistText}>Yêu thích</Text>
+        <TouchableOpacity
+          style={styles.wishlist}
+          activeOpacity={0.7}
+          onPress={() => {
+            if (!isSignedIn) {
+              router.push({
+                pathname: '/(auth)/login',
+                params: { redirect: pathname ?? '/' },
+              });
+              return;
+            }
+            toggleWishlist(productId).catch(() => {
+              // UI is reverted by context on failure
+            });
+          }}
+        >
+          <Ionicons
+            name={wished ? 'heart' : 'heart-outline'}
+            size={22}
+            color={COLORS.accentRed}
+          />
+          <Text style={[styles.wishlistText, wished && styles.wishlistTextActive]}>
+            Yêu thích
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -64,5 +95,9 @@ const styles = StyleSheet.create({
   wishlistText: {
     fontSize: 14,
     color: COLORS.cartTextSecondary,
+  },
+  wishlistTextActive: {
+    color: COLORS.accentRed,
+    fontWeight: '600',
   },
 });

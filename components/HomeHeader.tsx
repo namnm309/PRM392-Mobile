@@ -17,12 +17,13 @@ export function HomeHeader() {
     Platform.OS === 'android' && insets.top === 0
       ? (StatusBar.currentHeight ?? 24)
       : insets.top;
+  const iconColor = COLORS.accentRed;
 
   return (
     <View style={[styles.container, { paddingTop }]}>
       <View style={styles.row}>
         <TouchableOpacity style={styles.locationBlock} activeOpacity={0.7}>
-          <Ionicons name="location" size={20} color={COLORS.cartTextPrimary} />
+          <Ionicons name="location" size={20} color={iconColor} />
           <View>
             <Text style={styles.locationLabel}>Xem giá tại</Text>
             <Text style={styles.locationCity}>Hồ Chí Minh</Text>
@@ -30,12 +31,12 @@ export function HomeHeader() {
         </TouchableOpacity>
 
         <View style={styles.searchWrapper}>
-          <Ionicons name="search" size={20} color={COLORS.grey} />
+          <Ionicons name="search" size={20} color={iconColor} />
           <Text style={styles.searchPlaceholder}>Tìm kiếm</Text>
         </View>
 
         <TouchableOpacity style={styles.bellButton} activeOpacity={0.7}>
-          <Ionicons name="notifications-outline" size={24} color={COLORS.cartTextPrimary} />
+          <Ionicons name="notifications-outline" size={24} color={iconColor} />
         </TouchableOpacity>
       </View>
     </View>

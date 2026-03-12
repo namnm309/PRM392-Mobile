@@ -9,8 +9,9 @@ import {
   StatusBar,
   Image,
   Alert,
+  StyleSheet,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/theme';
@@ -19,11 +20,13 @@ import { getWishlist, removeFromWishlist, WishlistItemDto } from '@/lib/wishlist
 import { AdaptiveHeader } from '@/components/AdaptiveHeader';
 import { TabScreenWrapper } from '@/components/TabScreenWrapper';
 import { useTabBarBottomPadding } from '@/hooks/useTabBarBottomPadding';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 export default function WishlistScreen() {
   const router = useRouter();
   const { getToken } = useAuth();
   const tabBarBottomPadding = useTabBarBottomPadding();
+  const { refreshWishlist, toggleWishlist } = useWishlist();
   const [items, setItems] = useState<WishlistItemDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,10 +49,19 @@ export default function WishlistScreen() {
     fetchWishlist();
   }, [fetchWishlist]);
 
+  useFocusEffect(
+    useCallback(() => {
+      // Keep context + screen in sync when coming back
+      refreshWishlist().catch(() => {});
+      fetchWishlist();
+    }, [fetchWishlist, refreshWishlist])
+  );
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    refreshWishlist().catch(() => {});
     fetchWishlist();
-  }, [fetchWishlist]);
+  }, [fetchWishlist, refreshWishlist]);
 
   const handleRemove = useCallback(async (productId: string, productName: string) => {
     Alert.alert(
@@ -62,16 +74,28 @@ export default function WishlistScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await removeFromWishlist(getToken, productId);
+              // Use shared toggle to keep Home/ProductDetail hearts in sync
+              await toggleWishlist(productId);
               setItems(prev => prev.filter(item => item.productId !== productId));
             } catch (err: any) {
               Alert.alert('Lỗi', err.message || 'Không thể xóa sản phẩm');
+              fetchWishlist();
             }
           },
         },
       ]
     );
-  }, [getToken]);
+  }, [fetchWishlist, toggleWishlist]);
+
+  const getItemImageUrl = (item: WishlistItemDto): string | null => {
+    const anyItem = item as any;
+    return (
+      item.productImageUrl ||
+      anyItem.imageUrl ||
+      (anyItem.product && (anyItem.product.imageUrl || anyItem.product.productImageUrl)) ||
+      null
+    );
+  };
 
   const formatPrice = (price: number): string => {
     return price.toLocaleString('vi-VN') + 'đ';
@@ -107,24 +131,18 @@ export default function WishlistScreen() {
   return (
     <TabScreenWrapper>
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.accentRed} />
         
         <AdaptiveHeader
-          variant="light"
+          backgroundColor={COLORS.accentRed}
           title="Sản phẩm yêu thích"
           left={
             <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={{ padding: 8 }}>
-              <Ionicons name="chevron-back" size={24} color={COLORS.background} />
+              <Ionicons name="chevron-back" size={24} color={COLORS.white} />
             </TouchableOpacity>
           }
-          right={
-            items.length > 0 ? (
-              <View style={{ backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.white }}>{items.length}</Text>
-              </View>
-            ) : undefined
-          }
         />
+        <View style={{ height: 12, backgroundColor: COLORS.white }} />
 
         {items.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -137,78 +155,85 @@ export default function WishlistScreen() {
         ) : (
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollViewContent, { paddingBottom: tabBarBottomPadding }]}
+            contentContainerStyle={[
+              styles.scrollViewContent,
+              { paddingBottom: tabBarBottomPadding, paddingTop: 4 },
+            ]}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
             }
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ paddingVertical: 8 }}>
+            <View>
               {items.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={[styles.card, { flexDirection: 'row' }]}
+                  style={[styles.card, wishlistStyles.itemCard]}
                   activeOpacity={0.7}
+                  onPress={() =>
+                    router.push({ pathname: '/product/[id]', params: { id: item.productId } })
+                  }
                 >
                   <Image
-                    source={{ uri: item.productImageUrl || 'https://via.placeholder.com/100' }}
-                    style={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: 8,
-                      marginRight: 12,
-                      backgroundColor: '#F3F4F6',
+                    source={{
+                      uri: getItemImageUrl(item) || 'https://via.placeholder.com/100',
                     }}
+                    style={wishlistStyles.thumb}
                   />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '500', color: COLORS.background, marginBottom: 4 }} numberOfLines={2}>
+                  <View style={wishlistStyles.info}>
+                    <Text style={wishlistStyles.name} numberOfLines={2}>
                       {item.productName}
                     </Text>
-                    
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.primary }}>
-                        {formatPrice(item.isOnSale && item.productSalePrice ? item.productSalePrice : item.productPrice)}
+
+                    <View style={wishlistStyles.priceRow}>
+                      <Text style={wishlistStyles.priceNow}>
+                        {formatPrice(
+                          item.isOnSale && item.productSalePrice
+                            ? item.productSalePrice
+                            : item.productPrice
+                        )}
                       </Text>
-                      {item.isOnSale && item.productSalePrice && (
-                        <Text style={{
-                          fontSize: 13,
-                          color: COLORS.grey,
-                          textDecorationLine: 'line-through',
-                        }}>
+                      {item.isOnSale && item.productSalePrice ? (
+                        <Text style={wishlistStyles.priceOld}>
                           {formatPrice(item.productPrice)}
                         </Text>
-                      )}
+                      ) : null}
                     </View>
 
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <View style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}>
-                        <View style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: 4,
-                          backgroundColor: item.isAvailable && item.stock > 0 ? '#10B981' : '#EF4444',
-                        }} />
-                        <Text style={{ fontSize: 12, color: item.isAvailable && item.stock > 0 ? '#10B981' : '#EF4444' }}>
-                          {item.isAvailable && item.stock > 0 ? `Còn ${item.stock} sản phẩm` : 'Hết hàng'}
+                    <View style={wishlistStyles.metaRow}>
+                      <View style={wishlistStyles.stockRow}>
+                        <View
+                          style={[
+                            wishlistStyles.stockDot,
+                            item.isAvailable && item.stock > 0
+                              ? wishlistStyles.stockDotOk
+                              : wishlistStyles.stockDotBad,
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            wishlistStyles.stockText,
+                            item.isAvailable && item.stock > 0
+                              ? wishlistStyles.stockTextOk
+                              : wishlistStyles.stockTextBad,
+                          ]}
+                        >
+                          {item.isAvailable && item.stock > 0
+                            ? `Còn ${item.stock} sản phẩm`
+                            : 'Hết hàng'}
                         </Text>
                       </View>
-                      
-                      <TouchableOpacity
-                        style={{
-                          padding: 8,
-                          borderRadius: 20,
-                          backgroundColor: '#FEE2E2',
-                        }}
-                        onPress={() => handleRemove(item.productId, item.productName)}
-                      >
-                        <Ionicons name="heart-dislike-outline" size={20} color="#EF4444" />
-                      </TouchableOpacity>
                     </View>
                   </View>
+
+                  <TouchableOpacity
+                    style={wishlistStyles.removeBtn}
+                    onPress={() => handleRemove(item.productId, item.productName)}
+                    activeOpacity={0.8}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Ionicons name="heart-dislike-outline" size={18} color={COLORS.accentRed} />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               ))}
             </View>
@@ -218,3 +243,79 @@ export default function WishlistScreen() {
     </TabScreenWrapper>
   );
 }
+
+const wishlistStyles = StyleSheet.create({
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+  },
+  thumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    marginRight: 12,
+    backgroundColor: '#F3F4F6',
+  },
+  info: {
+    flex: 1,
+    minHeight: 72,
+    justifyContent: 'space-between',
+    paddingRight: 8,
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.cartTextPrimary,
+    lineHeight: 18,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    marginTop: 6,
+  },
+  priceNow: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.accentRed,
+  },
+  priceOld: {
+    fontSize: 12,
+    color: COLORS.grey,
+    textDecorationLine: 'line-through',
+  },
+  metaRow: {
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  stockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  stockDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  stockDotOk: { backgroundColor: '#10B981' },
+  stockDotBad: { backgroundColor: '#EF4444' },
+  stockText: { fontSize: 12 },
+  stockTextOk: { color: '#10B981' },
+  stockTextBad: { color: '#EF4444' },
+  removeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
+});

@@ -6,8 +6,8 @@ import {
   View,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  useWindowDimensions,
 } from 'react-native';
-import { useWindowDimensions } from 'react-native';
 import { COLORS } from '@/constants/theme';
 
 const banners = [
@@ -42,7 +42,7 @@ export function HomePromoBanner() {
     }, 4000);
 
     return () => clearInterval(intervalId);
-  }, [bannerWidth]);
+  }, [bannerWidth, width]);
 
   const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -93,22 +93,22 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 8,
     marginBottom: 12,
-    backgroundColor: 'transparent',
+    backgroundColor: COLORS.white,
   },
   scrollView: {
-    backgroundColor: 'transparent',
+    backgroundColor: COLORS.white,
   },
   scrollContent: {
     alignItems: 'center',
   },
   page: {
-    backgroundColor: 'transparent',
+    backgroundColor: COLORS.white,
   },
   bannerImage: {
     height: 190,
     borderRadius: 16,
     alignSelf: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: COLORS.white,
   },
   dotsRow: {
     flexDirection: 'row',

@@ -8,7 +8,6 @@ import {
   StatusBar,
 } from 'react-native';
 import { useUser, useAuth } from '@clerk/clerk-expo';
-import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/theme';
@@ -24,18 +23,6 @@ export default function Profile() {
   const insets = useSafeAreaInsets();
   const tabBarBottomPadding = useTabBarBottomPadding();
   const [phoneVisible, setPhoneVisible] = useState(false);
-
-  const handleCopyTokenForSwagger = async () => {
-    try {
-      const token = await getToken();
-      if (token) {
-        await Clipboard.setStringAsync(token);
-        // Could add Alert.alert('Đã copy', 'Token đã copy. Dán vào Swagger Authorize.');
-      }
-    } catch (e) {
-      console.error('Copy token error:', e);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -326,17 +313,6 @@ export default function Profile() {
 
         {/* Khác */}
         {renderMenuSection('Khác', otherItems)}
-
-        {/* Dev: Copy token for Swagger */}
-        {__DEV__ && (
-          <TouchableOpacity
-            style={[styles.logoutButton, { backgroundColor: `${COLORS.primary}15`, marginBottom: 8 }]}
-            onPress={handleCopyTokenForSwagger}
-          >
-            <Ionicons name="copy-outline" size={20} color={COLORS.primary} />
-            <Text style={[styles.logoutText, { color: COLORS.primary }]}>Copy token for Swagger</Text>
-          </TouchableOpacity>
-        )}
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>

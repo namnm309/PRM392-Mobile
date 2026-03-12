@@ -1,7 +1,8 @@
 import type { HomeProduct } from '@/constants/homeProductData';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
+import { useAuth } from '@clerk/clerk-expo';
 import React from 'react';
 import {
     Image,
@@ -11,6 +12,7 @@ import {
     useWindowDimensions,
     View,
 } from 'react-native';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 function formatPrice(v: number) {
   return new Intl.NumberFormat('vi-VN').format(v) + '₫';
@@ -23,8 +25,12 @@ type ProductCardProps = {
 
 export function ProductCard({ product, width }: ProductCardProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { isSignedIn } = useAuth();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = width ?? Math.min(180, (screenWidth - 16 * 2 - 12) / 2);
+  const wished = isWishlisted(product.id);
 
   return (
     <TouchableOpacity
@@ -85,9 +91,20 @@ export function ProductCard({ product, width }: ProductCardProps) {
         <TouchableOpacity
           style={styles.wishlist}
           activeOpacity={0.7}
-          onPress={() => {}}
+          onPress={() => {
+            if (!isSignedIn) {
+              router.push({
+                pathname: '/(auth)/login',
+                params: { redirect: pathname ?? '/' },
+              });
+              return;
+            }
+            toggleWishlist(product.id).catch(() => {
+              // Swallow to avoid unhandled promise; UI is reverted by context on failure
+            });
+          }}
         >
-          <Ionicons name="heart-outline" size={18} color={COLORS.accentRed} />
+          <Ionicons name={wished ? 'heart' : 'heart-outline'} size={18} color={COLORS.accentRed} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
