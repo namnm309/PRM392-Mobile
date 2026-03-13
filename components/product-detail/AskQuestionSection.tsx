@@ -7,9 +7,6 @@ export function AskQuestionSection() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.mascot}>
-          <Text style={styles.mascotEmoji}>🤖</Text>
-        </View>
         <Text style={styles.title}>Hãy đặt câu hỏi cho chúng tôi</Text>
       </View>
       <Text style={styles.description}>
@@ -33,19 +30,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     marginBottom: 12,
-  },
-  mascot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mascotEmoji: {
-    fontSize: 24,
   },
   title: {
     flex: 1,

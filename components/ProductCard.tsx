@@ -31,6 +31,7 @@ export function ProductCard({ product, width }: ProductCardProps) {
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = width ?? Math.min(180, (screenWidth - 16 * 2 - 12) / 2);
   const wished = isWishlisted(product.id);
+  const hasDiscount = product.priceOriginal > product.priceCurrent;
 
   return (
     <TouchableOpacity
@@ -78,9 +79,11 @@ export function ProductCard({ product, width }: ProductCardProps) {
       <Text style={styles.priceCurrent}>
         {formatPrice(product.priceCurrent)}
       </Text>
-      <Text style={styles.priceOriginal}>
-        {formatPrice(product.priceOriginal)}
-      </Text>
+      {hasDiscount && (
+        <Text style={styles.priceOriginal}>
+          {formatPrice(product.priceOriginal)}
+        </Text>
+      )}
 
       {product.studentPrice != null ? (
         <Text style={styles.studentPrice}>

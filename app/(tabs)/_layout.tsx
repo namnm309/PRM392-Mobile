@@ -1,15 +1,38 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import React, { useEffect, useRef } from 'react';
 
 import { RoundedTabBar } from '@/components/RoundedTabBar';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useCart } from '@/contexts/CartContext';
 
 export default function TabLayout() {
+  const router = useRouter();
   const { items } = useCart();
   const cartCount = items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
+  const hasShownCartNotificationRef = useRef(false);
+
+  useEffect(() => {
+    if (hasShownCartNotificationRef.current) return;
+    if (cartCount > 0) {
+      hasShownCartNotificationRef.current = true;
+      Alert.alert(
+        'Giỏ hàng của bạn',
+        `Bạn đang có ${cartCount} sản phẩm trong giỏ hàng`,
+        [
+          { text: 'Để sau', style: 'cancel' },
+          {
+            text: 'Xem giỏ hàng',
+            onPress: () =>
+              router.push({
+                pathname: '/(tabs)/cart',
+              }),
+          },
+        ],
+      );
+    }
+  }, [cartCount, router]);
 
   return (
     <Tabs

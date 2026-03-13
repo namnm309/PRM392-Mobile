@@ -30,13 +30,16 @@ export function ProductDetailBottomBar({
 }: ProductDetailBottomBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 12);
+  const hasDiscount = priceOriginal > priceCurrent;
 
   return (
     <View style={[styles.container, { paddingBottom: bottomPadding }]}>
       <View style={styles.priceRow}>
         <Text style={styles.priceLabel}>Giá</Text>
         <View style={styles.prices}>
-          <Text style={styles.priceOriginal}>{formatPrice(priceOriginal)}</Text>
+          {hasDiscount && (
+            <Text style={styles.priceOriginal}>{formatPrice(priceOriginal)}</Text>
+          )}
           <Text style={styles.priceCurrent}>{formatPrice(priceCurrent)}</Text>
         </View>
       </View>
