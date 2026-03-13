@@ -8,7 +8,6 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import Animated, { FadeOutLeft } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,10 +39,7 @@ function CartItemRow({
   const discount = item.priceOriginal - item.priceCurrent;
 
   return (
-    <Animated.View
-      style={cartStyles.itemCard}
-      exiting={FadeOutLeft.duration(300).springify().damping(14)}
-    >
+    <View style={cartStyles.itemCard}>
       <TouchableOpacity
         style={[cartStyles.itemCheckbox, isSelected && cartStyles.itemCheckboxChecked]}
         onPress={onToggleSelect}
@@ -101,7 +97,7 @@ function CartItemRow({
           </TouchableOpacity>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -122,6 +118,31 @@ export default function CartScreen() {
   const allSelected = items.length > 0 && items.every((i) => i.selected === true);
   const [showRemoveToast, setShowRemoveToast] = useState(false);
   const removeToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const outOfStockHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+
+    const outOfStockItems = items.filter(
+      (item) => item.isAvailable === false || item.maxQuantity === 0,
+    );
+
+    if (outOfStockItems.length === 0) {
+      return;
+    }
+
+    if (!outOfStockHandledRef.current) {
+      outOfStockHandledRef.current = true;
+      Alert.alert(
+        'Thông báo',
+        'Một số sản phẩm trong giỏ hàng đã hết hàng và sẽ được xoá khỏi giỏ.',
+      );
+    }
+
+    outOfStockItems.forEach((item) => {
+      removeItem(item.id);
+    });
+  }, [items, removeItem]);
 
   const handleRemoveItem = (itemId: string) => {
     removeItem(itemId);

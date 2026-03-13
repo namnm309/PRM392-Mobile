@@ -11,16 +11,20 @@ import {
 import { COLORS } from '@/constants/theme';
 
 const banners = [
-  require('@/assets/images/home/homebanner1.jpg'),
-  require('@/assets/images/home/homebanner2.jpg'),
-  require('@/assets/images/home/homebanner3.jpg'),
-  require('@/assets/images/home/homebanner4.jpg'),
+  require('@/assets/images/home/banner1.png'),
+  require('@/assets/images/home/banner2.png'),
+  require('@/assets/images/home/banner3.png'),
+  require('@/assets/images/home/banner4.png'),
+  require('@/assets/images/home/banner5.png'),
+  require('@/assets/images/home/banner7.png'),
+  require('@/assets/images/home/banner8.png'),
+  require('@/assets/images/home/banner9.png'),
 ] as const;
 
 export function HomePromoBanner() {
   const { width } = useWindowDimensions();
-  const horizontalPadding = 16;
-  const bannerWidth = width - horizontalPadding * 2; // ảnh nhỏ hơn một chút so với màn hình
+  const horizontalPadding = 8;
+  const bannerWidth = width - horizontalPadding * 2; // ảnh gần sát 2 cạnh màn hình
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
   const indexRef = useRef(0);
@@ -67,7 +71,10 @@ export function HomePromoBanner() {
           <View key={index} style={[styles.page, { width }]}>
             <Image
               source={source}
-              style={[styles.bannerImage, { width: bannerWidth, marginHorizontal: horizontalPadding }]}
+              style={[
+                styles.bannerImage,
+                { width: bannerWidth, marginHorizontal: horizontalPadding },
+              ]}
               resizeMode="contain"
             />
           </View>
@@ -106,7 +113,7 @@ const styles = StyleSheet.create({
   },
   bannerImage: {
     height: 190,
-    borderRadius: 16,
+    borderRadius: 20,
     alignSelf: 'center',
     backgroundColor: COLORS.white,
   },

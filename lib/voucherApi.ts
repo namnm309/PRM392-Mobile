@@ -3,6 +3,7 @@ import { fetchWithAuth } from './authApi';
 
 export interface VoucherDto {
   id: string;
+  name: string;
   code: string;
   discountType: string;
   value: number;

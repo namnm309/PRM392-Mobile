@@ -26,6 +26,9 @@ export type CartItem = {
   imageUri?: string | null;
   quantity: number;
   selected?: boolean;
+  isAvailable?: boolean;
+  maxQuantity?: number;
+  reasonUnavailable?: string | null;
 };
 
 type CartContextValue = {
@@ -60,6 +63,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       imageUri: dto.productImageUrl,
       quantity: dto.quantity,
       selected: true,
+      isAvailable: dto.isAvailable,
+      maxQuantity: dto.maxQuantity,
+      reasonUnavailable: dto.reasonUnavailable ?? null,
     };
   }, []);
 
@@ -131,6 +137,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               imageUri: product.imageUri,
               quantity: 1,
               selected: true,
+              isAvailable: true,
+              maxQuantity: 999,
+              reasonUnavailable: null,
             },
           ];
         });
@@ -173,6 +182,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               imageUri: product.imageUri,
               quantity: 1,
               selected: true,
+              isAvailable: true,
+              maxQuantity: 999,
+              reasonUnavailable: null,
             },
           ];
         });
