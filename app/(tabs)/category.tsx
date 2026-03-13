@@ -5,7 +5,7 @@ import { useTabBarBottomPadding } from "@/hooks/useTabBarBottomPadding";
 import type { ApiCategory } from "@/lib/categoriesApi";
 import { fetchCategories } from "@/lib/categoriesApi";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,6 +23,7 @@ const SIDEBAR_WIDTH = 88;
 
 export default function CategoryScreen() {
   const tabBarBottomPadding = useTabBarBottomPadding();
+  const router = useRouter();
   const { categoryId: paramCategoryId } = useLocalSearchParams<{
     categoryId?: string;
   }>();
@@ -179,9 +180,13 @@ export default function CategoryScreen() {
                               styles.brandTileSelected,
                           ]}
                           onPress={() =>
-                            setSelectedBrandId((current) =>
-                              current === brand.id ? null : brand.id,
-                            )
+                            router.push({
+                              pathname: "/brand" as const,
+                              params: {
+                                brandId: brand.id,
+                                brandName: brand.name,
+                              },
+                            })
                           }
                           activeOpacity={0.7}
                         >

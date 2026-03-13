@@ -1,29 +1,27 @@
-import { ProductCard } from '@/components/ProductCard';
-import type { HomeProduct } from '@/constants/homeProductData';
-import { COLORS } from '@/constants/theme';
-import type { ApiCategory } from '@/lib/categoriesApi';
+import { ProductCard } from "@/components/ProductCard";
+import type { HomeProduct } from "@/constants/homeProductData";
+import { COLORS } from "@/constants/theme";
+import type { ApiBrandSummary, ApiCategory } from "@/lib/categoriesApi";
+import { fetchProducts, mapApiProductToHomeProduct } from "@/lib/productsApi";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  fetchProducts,
-  mapApiProductToHomeProduct,
-} from '@/lib/productsApi';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
+} from "react-native";
 
 type ProductCategorySectionProps = {
   category: ApiCategory;
 };
 
-export function ProductCategorySection({ category }: ProductCategorySectionProps) {
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+export function ProductCategorySection({
+  category,
+}: ProductCategorySectionProps) {
   const [products, setProducts] = useState<HomeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const { width } = useWindowDimensions();
@@ -54,23 +52,22 @@ export function ProductCategorySection({ category }: ProductCategorySectionProps
 
   const handleSeeAll = () => {
     router.push({
-      pathname: '/category' as const,
+      pathname: "/category" as const,
       params: { categoryId: category.id },
     });
   };
 
-  const handleBrandPress = (brand: string) => {
-    setSelectedBrand((current) => (current === brand ? null : brand));
+  const handleBrandPress = (brand: ApiBrandSummary) => {
+    router.push({
+      pathname: "/brand" as const,
+      params: {
+        brandId: brand.id,
+        brandName: brand.name,
+      },
+    });
   };
 
-  const brandChips = Array.from(
-    new Set(products.map((p) => p.brand).filter(Boolean)),
-  );
-
-  const filteredProducts =
-    selectedBrand == null
-      ? products
-      : products.filter((p) => p.brand === selectedBrand);
+  const brandChips = category.brands ?? [];
 
   return (
     <View style={styles.container}>
@@ -90,21 +87,15 @@ export function ProductCategorySection({ category }: ProductCategorySectionProps
         >
           {brandChips.map((brand) => (
             <TouchableOpacity
-              key={brand}
-              style={[
-                styles.chip,
-                selectedBrand === brand && styles.chipSelected,
-              ]}
+              key={brand.id}
+              style={styles.chip}
               onPress={() => handleBrandPress(brand)}
               activeOpacity={0.7}
             >
               <Text
-                style={[
-                  styles.chipText,
-                  selectedBrand === brand && styles.chipTextSelected,
-                ]}
+                style={styles.chipText}
               >
-                {brand}
+                {brand.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -125,7 +116,7 @@ export function ProductCategorySection({ category }: ProductCategorySectionProps
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.productsWrap}
         >
-          {filteredProducts.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} width={cardWidth} />
           ))}
         </ScrollView>
@@ -140,21 +131,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.cartTextPrimary,
   },
   seeAll: {
     fontSize: 14,
     color: COLORS.accentRed,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   chipsScroll: {
     marginBottom: 12,
@@ -162,7 +153,7 @@ const styles = StyleSheet.create({
   chipsWrap: {
     paddingHorizontal: 16,
     gap: 8,
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingRight: 32,
   },
   chip: {
@@ -173,26 +164,25 @@ const styles = StyleSheet.create({
     borderColor: COLORS.categoryChipBorder,
   },
   chipSelected: {
-    backgroundColor: COLORS.accentRed,
-    borderColor: COLORS.accentRed,
+    borderColor: COLORS.categoryChipBorder,
   },
   chipText: {
     fontSize: 13,
     color: COLORS.categoryChipText,
   },
   chipTextSelected: {
-    color: COLORS.white,
-    fontWeight: '600',
+    color: COLORS.categoryChipText,
+    fontWeight: "600",
   },
   loadingWrap: {
     paddingHorizontal: 16,
     paddingVertical: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyWrap: {
     paddingHorizontal: 16,
     paddingVertical: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 13,
@@ -201,7 +191,7 @@ const styles = StyleSheet.create({
   productsWrap: {
     paddingHorizontal: 16,
     gap: 12,
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingRight: 32,
   },
 });
