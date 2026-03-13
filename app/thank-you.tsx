@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +32,8 @@ export default function ThankYouScreen() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const orderLoadedRef = useRef(false);
+  const checkmarkScale = useRef(new Animated.Value(0)).current;
+  const checkmarkOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Prevent multiple calls
@@ -79,6 +82,27 @@ export default function ThankYouScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]); // Only depend on orderId, not getToken
+
+  useEffect(() => {
+    if (loading) return;
+
+    checkmarkScale.setValue(0);
+    checkmarkOpacity.setValue(0);
+
+    Animated.parallel([
+      Animated.spring(checkmarkScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(checkmarkOpacity, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [loading, checkmarkOpacity, checkmarkScale]);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -160,9 +184,17 @@ export default function ThankYouScreen() {
         ) : (
           <>
             <View style={styles.iconContainer}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="checkmark-circle" size={80} color={COLORS.accentRed} />
-              </View>
+              <Animated.View
+                style={[
+                  styles.iconCircle,
+                  {
+                    opacity: checkmarkOpacity,
+                    transform: [{ scale: checkmarkScale }],
+                  },
+                ]}
+              >
+                <Ionicons name="checkmark-circle" size={80} color="#22c55e" />
+              </Animated.View>
             </View>
 
             <Text style={styles.title}>
@@ -189,7 +221,16 @@ export default function ThankYouScreen() {
                 </View>
                 <View style={styles.orderInfoRow}>
                   <Text style={styles.orderInfoLabel}>Tổng tiền:</Text>
-                  <Text style={styles.orderInfoValue}>{formatPrice(order.totalAmount)}</Text>
+                  <Text style={styles.orderInfoValue}>
+                    {formatPrice(
+                      Math.max(
+                        (order.subtotal ?? 0) +
+                          (order.shippingFee ?? 0) -
+                          (order.discountAmount ?? 0),
+                        0,
+                      ),
+                    )}
+                  </Text>
                 </View>
                 <View style={styles.orderInfoRow}>
                   <Text style={styles.orderInfoLabel}>Phương thức thanh toán:</Text>

@@ -1,29 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import { CategoryHeader } from "@/components/CategoryHeader";
+import { TabScreenWrapper } from "@/components/TabScreenWrapper";
+import { COLORS } from "@/constants/theme";
+import { useTabBarBottomPadding } from "@/hooks/useTabBarBottomPadding";
+import type { ApiCategory } from "@/lib/categoriesApi";
+import { fetchCategories } from "@/lib/categoriesApi";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
-  useWindowDimensions,
   Image,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
-import { useTabBarBottomPadding } from '@/hooks/useTabBarBottomPadding';
-import { CategoryHeader } from '@/components/CategoryHeader';
-import { ProductCard } from '@/components/ProductCard';
-import { COLORS } from '@/constants/theme';
-import { fetchCategories } from '@/lib/categoriesApi';
-import type { ApiCategory } from '@/lib/categoriesApi';
-import {
-  fetchProducts,
-  mapApiProductToHomeProduct,
-} from '@/lib/productsApi';
-import type { HomeProduct } from '@/constants/homeProductData';
-import { TabScreenWrapper } from '@/components/TabScreenWrapper';
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const SIDEBAR_WIDTH = 88;
 
@@ -35,18 +29,14 @@ export default function CategoryScreen() {
 
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
-  const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
-  const [products, setProducts] = useState<HomeProduct[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [productsLoading, setProductsLoading] = useState(true);
-
   const { width } = useWindowDimensions();
-  const cardWidth = (width - SIDEBAR_WIDTH - 16 - 16 - 12) / 2;
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
-  const categoryLabel = selectedCategory?.name ?? 'Danh mục';
+  const categoryLabel = selectedCategory?.name ?? "Danh mục";
 
   useEffect(() => {
     let cancelled = false;
@@ -57,8 +47,9 @@ export default function CategoryScreen() {
           const initialId =
             paramCategoryId && data.some((c) => c.id === paramCategoryId)
               ? paramCategoryId
-              : data[0]?.id ?? null;
+              : (data[0]?.id ?? null);
           setSelectedCategoryId(initialId);
+          setSelectedBrandId(null);
         }
       })
       .catch(() => {
@@ -72,36 +63,12 @@ export default function CategoryScreen() {
     };
   }, [paramCategoryId]);
 
-  const categoryIdToFetch = selectedSubId ?? selectedCategoryId;
-
-  useEffect(() => {
-    if (!categoryIdToFetch) {
-      setProducts([]);
-      setProductsLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setProductsLoading(true);
-    fetchProducts({ categoryId: categoryIdToFetch })
-      .then((data) => {
-        if (!cancelled) {
-          setProducts(data.map(mapApiProductToHomeProduct));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setProducts([]);
-      })
-      .finally(() => {
-        if (!cancelled) setProductsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [categoryIdToFetch]);
-
-  const handleSubPress = (childId: string) => {
-    setSelectedSubId(selectedSubId === childId ? null : childId);
-  };
+  const brands = selectedCategory?.brands ?? [];
+  const contentWidth = width - SIDEBAR_WIDTH;
+  const brandGap = 8;
+  const brandColumns = 3;
+  const brandTileWidth =
+    (contentWidth - brandGap * (brandColumns + 1)) / brandColumns;
 
   if (loading) {
     return (
@@ -126,7 +93,7 @@ export default function CategoryScreen() {
   return (
     <TabScreenWrapper>
       <View style={styles.screen}>
-        <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <CategoryHeader />
           <View style={styles.body}>
             <View style={styles.sidebar}>
@@ -141,13 +108,11 @@ export default function CategoryScreen() {
                     ]}
                     onPress={() => {
                       setSelectedCategoryId(cat.id);
-                      setSelectedSubId(null);
+                      setSelectedBrandId(null);
                     }}
                     activeOpacity={0.7}
                   >
-                    {isSelected ? (
-                      <View style={styles.sidebarRedBar} />
-                    ) : null}
+                    {isSelected ? <View style={styles.sidebarRedBar} /> : null}
                     <View style={styles.sidebarIconWrap}>
                       {cat.imageUrl ? (
                         <Image
@@ -159,7 +124,11 @@ export default function CategoryScreen() {
                         <Ionicons
                           name="grid-outline"
                           size={36}
-                          color={isSelected ? COLORS.accentRed : COLORS.categoryChipTextSecondary}
+                          color={
+                            isSelected
+                              ? COLORS.accentRed
+                              : COLORS.categoryChipTextSecondary
+                          }
                         />
                       )}
                     </View>
@@ -188,55 +157,51 @@ export default function CategoryScreen() {
                 <Text style={styles.categoryTitle}>{categoryLabel}</Text>
               </View>
 
-              {selectedCategory && selectedCategory.children.length > 0 && (
+              {selectedCategory && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Hãng / Loại</Text>
-                  <View style={styles.chipRow}>
-                    {selectedCategory.children.map((child) => (
-                      <TouchableOpacity
-                        key={child.id}
-                        style={[
-                          styles.chip,
-                          selectedSubId === child.id && styles.chipSelected,
-                        ]}
-                        onPress={() => handleSubPress(child.id)}
-                        activeOpacity={0.7}
-                      >
-                        <Text
+                  <Text style={styles.sectionTitle}>Hãng {categoryLabel}</Text>
+                  {brands.length === 0 ? (
+                    <Text style={styles.emptyText}>Chưa có thương hiệu</Text>
+                  ) : (
+                    <View
+                      style={[
+                        styles.brandRow,
+                        { width: contentWidth },
+                      ]}
+                    >
+                      {brands.map((brand) => (
+                        <TouchableOpacity
+                          key={brand.id}
                           style={[
-                            styles.chipText,
-                            selectedSubId === child.id &&
-                              styles.chipTextSelected,
+                            styles.brandTile,
+                            { width: brandTileWidth },
+                            selectedBrandId === brand.id &&
+                              styles.brandTileSelected,
                           ]}
+                          onPress={() =>
+                            setSelectedBrandId((current) =>
+                              current === brand.id ? null : brand.id,
+                            )
+                          }
+                          activeOpacity={0.7}
                         >
-                          {child.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                          {brand.imageUrl ? (
+                            <Image
+                              source={{ uri: brand.imageUrl }}
+                              style={styles.brandLogo}
+                              resizeMode="contain"
+                            />
+                          ) : (
+                            <Text style={styles.brandName} numberOfLines={2}>
+                              {brand.name}
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
-
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Sản phẩm</Text>
-                {productsLoading ? (
-                  <View style={styles.productsLoading}>
-                    <ActivityIndicator size="small" color={COLORS.headerBlue} />
-                  </View>
-                ) : products.length === 0 ? (
-                  <Text style={styles.emptyText}>Chưa có sản phẩm</Text>
-                ) : (
-                  <View style={styles.productsGrid}>
-                    {products.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        width={cardWidth}
-                      />
-                    ))}
-                  </View>
-                )}
-              </View>
             </ScrollView>
           </View>
         </SafeAreaView>
@@ -251,8 +216,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   safeArea: {
     flex: 1,
@@ -260,7 +225,7 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: COLORS.white,
   },
   sidebar: {
@@ -272,16 +237,16 @@ const styles = StyleSheet.create({
   sidebarItem: {
     paddingVertical: 8,
     paddingHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     minHeight: 96,
-    position: 'relative',
+    position: "relative",
   },
   sidebarItemSelected: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   sidebarRedBar: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
@@ -291,8 +256,8 @@ const styles = StyleSheet.create({
   sidebarIconWrap: {
     width: 80,
     height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 6,
   },
   sidebarIcon: {
@@ -303,30 +268,30 @@ const styles = StyleSheet.create({
   sidebarText: {
     fontSize: 12,
     color: COLORS.categoryChipTextSecondary,
-    textAlign: 'center',
+    textAlign: "center",
   },
   sidebarTextSelected: {
     color: COLORS.accentRed,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   contentScroll: {
     flex: 1,
     backgroundColor: COLORS.white,
   },
   contentScrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingTop: 8,
     paddingBottom: 24,
   },
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   categoryTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.categoryChipText,
   },
   section: {
@@ -338,8 +303,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
   chip: {
@@ -359,16 +324,37 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: COLORS.white,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  productsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+  brandRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    paddingRight: 8,
   },
-  productsLoading: {
-    paddingVertical: 24,
-    alignItems: 'center',
+  brandTile: {
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.categoryChipBorder,
+    backgroundColor: COLORS.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandTileSelected: {
+    borderColor: COLORS.accentRed,
+  },
+  brandLogo: {
+    width: "60%",
+    height: 18,
+    resizeMode: "contain",
+  },
+  brandName: {
+    fontSize: 12,
+    color: COLORS.categoryChipText,
+    textAlign: "center",
+    paddingHorizontal: 4,
   },
   emptyText: {
     fontSize: 13,
