@@ -23,16 +23,14 @@ type ProductCategorySectionProps = {
 };
 
 export function ProductCategorySection({ category }: ProductCategorySectionProps) {
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(
-    null
-  );
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [products, setProducts] = useState<HomeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(180, (width - 16 * 2 - 12) / 2);
   const router = useRouter();
 
-  const categoryIdToFetch = selectedSubCategory ?? category.id;
+  const categoryIdToFetch = category.id;
 
   useEffect(() => {
     let cancelled = false;
@@ -61,9 +59,18 @@ export function ProductCategorySection({ category }: ProductCategorySectionProps
     });
   };
 
-  const handleSubPress = (childId: string) => {
-    setSelectedSubCategory(selectedSubCategory === childId ? null : childId);
+  const handleBrandPress = (brand: string) => {
+    setSelectedBrand((current) => (current === brand ? null : brand));
   };
+
+  const brandChips = Array.from(
+    new Set(products.map((p) => p.brand).filter(Boolean)),
+  );
+
+  const filteredProducts =
+    selectedBrand == null
+      ? products
+      : products.filter((p) => p.brand === selectedBrand);
 
   return (
     <View style={styles.container}>
@@ -74,30 +81,30 @@ export function ProductCategorySection({ category }: ProductCategorySectionProps
         </TouchableOpacity>
       </View>
 
-      {category.children.length > 0 && (
+      {brandChips.length > 0 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsWrap}
           style={styles.chipsScroll}
         >
-          {category.children.map((child) => (
+          {brandChips.map((brand) => (
             <TouchableOpacity
-              key={child.id}
+              key={brand}
               style={[
                 styles.chip,
-                selectedSubCategory === child.id && styles.chipSelected,
+                selectedBrand === brand && styles.chipSelected,
               ]}
-              onPress={() => handleSubPress(child.id)}
+              onPress={() => handleBrandPress(brand)}
               activeOpacity={0.7}
             >
               <Text
                 style={[
                   styles.chipText,
-                  selectedSubCategory === child.id && styles.chipTextSelected,
+                  selectedBrand === brand && styles.chipTextSelected,
                 ]}
               >
-                {child.name}
+                {brand}
               </Text>
             </TouchableOpacity>
           ))}
@@ -118,7 +125,7 @@ export function ProductCategorySection({ category }: ProductCategorySectionProps
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.productsWrap}
         >
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} width={cardWidth} />
           ))}
         </ScrollView>

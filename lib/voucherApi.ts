@@ -24,6 +24,7 @@ export interface VoucherBreakdownDto {
   discountAmount: number;
   finalTotal: number;
   voucherCode: string;
+  voucherId?: string;
   errorMessage?: string;
   ineligibleItems: string[];
 }

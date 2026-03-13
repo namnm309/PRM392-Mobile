@@ -10,10 +10,11 @@ import { checkout } from "@/lib/ordersApi";
 import { calculateShippingFee } from "@/lib/shippingApi";
 import { createVnPayUrl } from "@/lib/vnpayApi";
 import {
-    applyVoucher,
-    getActiveVouchers,
-    type VoucherBreakdownDto,
-    type VoucherDto,
+  applyVoucher,
+  getActiveVouchers,
+  getVoucherByCode,
+  type VoucherBreakdownDto,
+  type VoucherDto,
 } from "@/lib/voucherApi";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
@@ -82,6 +83,11 @@ export default function CheckoutScreen() {
     [selectedItems],
   );
 
+  const hasDiscountedItems = useMemo(
+    () => selectedItems.some((item) => item.priceOriginal > item.priceCurrent),
+    [selectedItems],
+  );
+
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "Online">("COD");
 
@@ -99,6 +105,7 @@ export default function CheckoutScreen() {
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] =
     useState<VoucherBreakdownDto | null>(null);
+  const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [voucherList, setVoucherList] = useState<VoucherDto[]>([]);
@@ -282,6 +289,7 @@ export default function CheckoutScreen() {
       setAppliedVoucher(null);
       setVoucherCode("");
       setVoucherError(null);
+      setSelectedVoucherId(null);
     }
   }, [selectedItems, appliedVoucher]);
 
@@ -312,10 +320,21 @@ export default function CheckoutScreen() {
   }, []);
 
   const handleApplyVoucher = useCallback(
-    async (codeFromUi?: string) => {
+    async (codeFromUi?: string, voucherIdFromUi?: string) => {
       const code = (codeFromUi ?? voucherCode).trim().toUpperCase();
       if (!code) {
         setVoucherError("Vui lòng nhập mã khuyến mãi");
+        return;
+      }
+
+      const hasDiscounted = selectedItems.some(
+        (item) => item.priceOriginal > item.priceCurrent,
+      );
+      if (hasDiscounted) {
+        const msg =
+          "Sản phẩm trong giỏ đang được giảm giá nên không thể dùng thêm mã khuyến mãi.";
+        setVoucherError(msg);
+        Alert.alert("Mã khuyến mãi", msg);
         return;
       }
 
@@ -342,7 +361,26 @@ export default function CheckoutScreen() {
           return;
         }
 
+        // Xác định voucherId cho checkout
+        let resolvedVoucherId: string | null = voucherIdFromUi ?? null;
+        if (!resolvedVoucherId) {
+          const fromList = voucherList.find(
+            (v) => v.code.toUpperCase() === code,
+          );
+          if (fromList) {
+            resolvedVoucherId = fromList.id;
+          } else {
+            try {
+              const voucherDto = await getVoucherByCode(code);
+              resolvedVoucherId = voucherDto?.id ?? null;
+            } catch (e) {
+              console.warn("Không lấy được voucherId từ mã:", e);
+            }
+          }
+        }
+
         setAppliedVoucher(breakdown);
+        setSelectedVoucherId(resolvedVoucherId);
         setVoucherCode(breakdown.voucherCode);
         setVoucherError(null);
         setShowVoucherModal(false);
@@ -356,7 +394,7 @@ export default function CheckoutScreen() {
         setApplyingVoucher(false);
       }
     },
-    [selectedItems, voucherCode],
+    [selectedItems, voucherCode, voucherList],
   );
 
   const handleOpenVoucherModal = () => {
@@ -414,6 +452,7 @@ export default function CheckoutScreen() {
       const order = await checkout(getToken, {
         addressId: selectedAddressId,
         paymentMethod,
+        voucherId: selectedVoucherId ?? undefined,
         notes: notes.trim() || undefined,
         cartItemIds: cartItemIds.length > 0 ? cartItemIds : undefined,
         shippingFee,
@@ -718,14 +757,18 @@ export default function CheckoutScreen() {
                   styles.voucherApplyButton,
                   (applyingVoucher ||
                     !voucherCode.trim() ||
-                    selectedItems.length === 0) &&
+                    selectedItems.length === 0 ||
+                    hasDiscountedItems) &&
                     styles.voucherApplyButtonDisabled,
                 ]}
-                onPress={() => handleApplyVoucher()}
+                onPress={
+                  hasDiscountedItems ? undefined : () => handleApplyVoucher()
+                }
                 disabled={
                   applyingVoucher ||
                   !voucherCode.trim() ||
-                  selectedItems.length === 0
+                  selectedItems.length === 0 ||
+                  hasDiscountedItems
                 }
                 activeOpacity={0.7}
               >
@@ -1058,8 +1101,18 @@ export default function CheckoutScreen() {
                         </View>
 
                         <TouchableOpacity
-                          style={styles.voucherCardApplyBtn}
-                          onPress={() => void handleApplyVoucher(item.code)}
+                          style={[
+                            styles.voucherCardApplyBtn,
+                            (hasDiscountedItems || applyingVoucher) &&
+                              styles.voucherCardApplyBtnDisabled,
+                          ]}
+                          onPress={
+                            hasDiscountedItems || applyingVoucher
+                              ? undefined
+                              : () =>
+                                  void handleApplyVoucher(item.code, item.id)
+                          }
+                          disabled={hasDiscountedItems || applyingVoucher}
                           activeOpacity={0.7}
                         >
                           <Text style={styles.voucherCardApplyBtnText}>
@@ -1603,6 +1656,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     backgroundColor: COLORS.accentRed,
+  },
+  voucherCardApplyBtnDisabled: {
+    opacity: 0.6,
   },
   voucherCardApplyBtnText: {
     fontSize: 12,
