@@ -1,6 +1,7 @@
 import { Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 
+import { AIChatbotFab } from '@/components/AIChatbotFab';
 import { RoundedTabBar } from '@/components/RoundedTabBar';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +36,7 @@ export default function TabLayout() {
   }, [cartCount, router]);
 
   return (
+    <>
     <Tabs
       tabBar={(props) => <RoundedTabBar {...props} />}
       screenOptions={{
@@ -90,6 +92,8 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    <AIChatbotFab />
+    </>
   );
 }
 

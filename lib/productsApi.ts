@@ -72,6 +72,19 @@ export async function fetchProducts(
   return data;
 }
 
+export async function searchProductsByName(name: string): Promise<ApiProduct[]> {
+  if (!name?.trim()) return [];
+  const params = new URLSearchParams();
+  params.set('name', name.trim());
+  params.set('isActive', 'true');
+  const url = `${API_BASE_URL}/api/Products/search?${params.toString()}`;
+  const res = await fetch(url, { headers: { accept: 'application/json' } });
+  if (!res.ok) return [];
+  const json = (await res.json()) as ApiResponse<ApiProduct[]>;
+  if (!json.success || !json.data) return [];
+  return json.data;
+}
+
 export async function fetchProductById(
   id: string
 ): Promise<ApiProductDetail | null> {

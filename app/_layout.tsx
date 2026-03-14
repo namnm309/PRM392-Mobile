@@ -1,8 +1,10 @@
 import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import InitialLayout from '@/components/InitialLayout';
+import { AIChatbotProvider } from '@/contexts/ai-chatbot-context';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { COLORS } from '@/constants/theme';
@@ -16,20 +18,29 @@ if (!publishablekey) {
   )
 }
 
-export default function RootLayout() { 
+export default function RootLayout() {
   return (
-    <ClerkProvider publishableKey={publishablekey} tokenCache={tokenCache} >
+    <ClerkProvider publishableKey={publishablekey} tokenCache={tokenCache}>
       <ClerkLoaded>
-        <SafeAreaProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-                <InitialLayout />
-              </View>
-            </WishlistProvider>
-          </CartProvider>
-        </SafeAreaProvider>
+        <GestureHandlerRootView style={styles.root}>
+          <SafeAreaProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <AIChatbotProvider>
+                  <View style={styles.container}>
+                    <InitialLayout />
+                  </View>
+                </AIChatbotProvider>
+              </WishlistProvider>
+            </CartProvider>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
       </ClerkLoaded>
     </ClerkProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  container: { flex: 1, backgroundColor: COLORS.background },
+});
