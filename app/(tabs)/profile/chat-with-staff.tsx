@@ -49,7 +49,8 @@ export default function ChatWithStaffScreen() {
   useEffect(() => {
     connect();
     return () => {
-      connectionRef.current?.disconnect();
+      connectionRef.current?.disconnect().catch(() => {});
+      connectionRef.current = null;
     };
   }, [connect]);
 
@@ -100,10 +101,11 @@ export default function ChatWithStaffScreen() {
       )}
 
       <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-        {connecting ? (
+        {connecting && messages.length === 0 && !error ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={COLORS.accentRed} />
             <Text style={styles.connectingText}>Đang kết nối...</Text>
+            <Text style={styles.connectingHint}>Nếu quá 10 giây, nhấn Thử lại ở trên</Text>
           </View>
         ) : (
           <>
@@ -213,6 +215,11 @@ const styles = StyleSheet.create({
   connectingText: {
     color: COLORS.grey,
     fontSize: 14,
+  },
+  connectingHint: {
+    color: COLORS.grey,
+    fontSize: 12,
+    marginTop: 4,
   },
   listContent: {
     padding: 16,

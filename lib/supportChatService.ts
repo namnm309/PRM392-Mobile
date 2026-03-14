@@ -20,6 +20,16 @@ export interface SupportChatConnection {
 }
 
 const HUB_URL = `${BASE}/hubs/support-chat`;
+const CONNECT_TIMEOUT_MS = 12000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, msg: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(msg)), ms)
+    ),
+  ]);
+}
 
 export async function createSupportChatConnection(
   getToken: () => Promise<string | null>
@@ -28,14 +38,17 @@ export async function createSupportChatConnection(
   const token = await getToken();
   if (!token) throw new Error('Vui lòng đăng nhập để chat với nhân viên');
 
+  // Chỉ dùng Long Polling để tránh lỗi 503.13 trên Azure Free/Shared
+  // (giới hạn số kết nối WebSocket đồng thời rất thấp)
   const connection = new signalR.HubConnectionBuilder()
     .withUrl(HUB_URL, {
-      accessTokenFactory: () => Promise.resolve(token),
+      accessTokenFactory: async () => (await getToken()) ?? '',
       skipNegotiation: false,
-      transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling,
+      transport: signalR.HttpTransportType.LongPolling,
     })
-    .withAutomaticReconnect([0, 2000, 5000, 10000])
-    .configureLogging(signalR.LogLevel.Warning)
+    .withAutomaticReconnect([0, 1000, 3000])
+    .withServerTimeout(15000)
+    .configureLogging(signalR.LogLevel.None)
     .build();
 
   const messages: SupportChatMessage[] = [];
@@ -69,9 +82,17 @@ export async function createSupportChatConnection(
     console.error('[SupportChat] Error:', err);
   });
 
-  await connection.start();
+  await withTimeout(
+    connection.start(),
+    CONNECT_TIMEOUT_MS,
+    'Kết nối quá lâu. Kiểm tra mạng hoặc thử lại.'
+  );
 
-  const history = await connection.invoke<Array<{ id: string; content: string; senderRole: string; senderName: string; createdAt: string }>>('GetMyMessages');
+  const history = await withTimeout(
+    connection.invoke<Array<{ id: string; content: string; senderRole: string; senderName: string; createdAt: string }>>('GetMyMessages'),
+    5000,
+    'Tải tin nhắn thất bại.'
+  ).catch(() => []);
   if (history?.length) {
     history.forEach((h) => {
       messages.push({
