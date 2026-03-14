@@ -13,9 +13,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useChatService, COMPARE_SYSTEM_PROMPT, type ChatMessage } from '@/lib/services/chatService';
@@ -114,11 +114,16 @@ export function AIChatbotModal({
   const popoverAnim = useRef(new Animated.Value(0)).current;
   const isClosingRef = useRef(false);
 
-  const welcomeMsg: DisplayMessage = {
-    id: 'welcome',
-    role: 'assistant',
-    content: 'Xin chào! Tôi là trợ lý AI TechStore. Bạn có thể hỏi về sản phẩm, giá cả, bảo hành hoặc hướng dẫn mua hàng.',
-  };
+  const welcomeMsg = useMemo<DisplayMessage>(
+    () => ({
+      id: 'welcome',
+      role: 'assistant',
+      content: 'Xin chào! Tôi là trợ lý AI TechStore. Bạn có thể hỏi về sản phẩm, giá cả, bảo hành hoặc hướng dẫn mua hàng.',
+    }),
+    []
+  );
+
+  const initDoneRef = useRef(false);
 
   const popoverPos = useMemo(
     () => (popoverMode && fabPosition ? getPopoverPosition(fabPosition, insets) : { top: 0, left: 0 }),
@@ -126,34 +131,39 @@ export function AIChatbotModal({
   );
 
   useEffect(() => {
-    if (visible) {
-      setAwaitingCompareProductId(null);
-      if (initialMessage && autoSend) {
-        setMessages([{ id: '0', role: 'user', content: initialMessage }]);
-        setLoading(true);
-        const keywords = extractProductKeywords(initialMessage);
-        Promise.all([sendMessage([{ role: 'user', content: initialMessage }]), searchProductsByName(keywords)])
-          .then(([reply, products]) => {
-            const matched = products[0];
-            const assistantMsg: DisplayMessage = {
-              id: '1',
-              role: 'assistant',
-              content: reply,
-              ...(matched && { productId: matched.id, productName: matched.name }),
-            };
-            setMessages((p) => [...p, assistantMsg]);
-          })
-          .catch((err) => {
-            setMessages((p) => [...p, { id: 'err', role: 'assistant', content: `❌ ${err instanceof Error ? err.message : 'Lỗi'}` }]);
-          })
-          .finally(() => setLoading(false));
-      } else if (initialMessage) {
-        setMessages([{ id: '0', role: 'user', content: initialMessage }]);
-      } else {
-        setMessages([welcomeMsg]);
-      }
+    if (!visible) {
+      initDoneRef.current = false;
+      return;
     }
-  }, [visible, initialMessage, autoSend, sendMessage]);
+    if (initDoneRef.current) return;
+    initDoneRef.current = true;
+
+    setAwaitingCompareProductId(null);
+    if (initialMessage && autoSend) {
+      setMessages([{ id: '0', role: 'user', content: initialMessage }]);
+      setLoading(true);
+      const keywords = extractProductKeywords(initialMessage);
+      Promise.all([sendMessage([{ role: 'user', content: initialMessage }]), searchProductsByName(keywords)])
+        .then(([reply, products]) => {
+          const matched = products[0];
+          const assistantMsg: DisplayMessage = {
+            id: '1',
+            role: 'assistant',
+            content: reply,
+            ...(matched && { productId: matched.id, productName: matched.name }),
+          };
+          setMessages((p) => [...p, assistantMsg]);
+        })
+        .catch((err) => {
+          setMessages((p) => [...p, { id: 'err', role: 'assistant', content: `❌ ${err instanceof Error ? err.message : 'Lỗi'}` }]);
+        })
+        .finally(() => setLoading(false));
+    } else if (initialMessage) {
+      setMessages([{ id: '0', role: 'user', content: initialMessage }]);
+    } else {
+      setMessages([welcomeMsg]);
+    }
+  }, [visible, initialMessage, autoSend, sendMessage, welcomeMsg]);
 
   useEffect(() => {
     if (popoverMode && visible) {
@@ -315,7 +325,11 @@ export function AIChatbotModal({
 
       {showWelcomeChips ? (
         <>
-          <View style={styles.popoverWelcome}>
+          <ScrollView
+            style={styles.popoverWelcome}
+            contentContainerStyle={styles.popoverWelcomeContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
             <View style={styles.popoverSparkle}>
               <Ionicons name="sparkles" size={48} color={POPOVER_STYLES.accent} />
             </View>
@@ -335,7 +349,7 @@ export function AIChatbotModal({
                 <Text style={styles.popoverChipText}>Tư vấn sản phẩm (ví dụ)</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </ScrollView>
           <View style={[styles.inputRow, { backgroundColor: POPOVER_STYLES.header, borderTopColor: 'rgba(255,255,255,0.1)' }]}>
             <TextInput
               style={[styles.input, { backgroundColor: POPOVER_STYLES.card, color: POPOVER_STYLES.text }]}
@@ -364,7 +378,8 @@ export function AIChatbotModal({
             style={[styles.scroll, isPopover && { backgroundColor: POPOVER_STYLES.bg }]}
             contentContainerStyle={[styles.scrollContent, isPopover && { padding: 12 }]}
             showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled>
             {messages.map((msg) => (
               <View key={msg.id} style={[styles.bubbleWrap, msg.role === 'user' ? styles.bubbleUserWrap : styles.bubbleBotWrap]}>
                 <View style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot, isPopover && styles.bubblePopover, (msg.role === 'assistant' && msg.productId) && styles.bubbleWithActions]}>
@@ -428,15 +443,20 @@ export function AIChatbotModal({
 
   return (
     <Modal visible={visible} animationType={isPopover ? 'fade' : 'slide'} transparent>
-      <View style={[styles.overlay, isPopover && styles.overlayPopover]}>
+      <View style={[styles.overlay, isPopover && styles.overlayPopover]} pointerEvents="box-none">
         {isPopover ? (
-          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handlePopoverClose} />
+          <TouchableOpacity
+            style={[StyleSheet.absoluteFill, { zIndex: 0 }]}
+            activeOpacity={1}
+            onPress={handlePopoverClose}
+          />
         ) : null}
         <Animated.View
           style={[
             isPopover
               ? {
                   position: 'absolute',
+                  zIndex: 1,
                   top: popoverPos.top,
                   left: popoverPos.left,
                   width: POPOVER_WIDTH,
@@ -521,7 +541,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 8,
+    paddingBottom: 24,
+    flexGrow: 1,
   },
   bubbleWrap: {
     marginBottom: 10,
@@ -624,8 +645,11 @@ const styles = StyleSheet.create({
   },
   popoverWelcome: {
     flex: 1,
+  },
+  popoverWelcomeContent: {
     padding: 16,
     alignItems: 'center',
+    paddingBottom: 24,
   },
   popoverSparkle: {
     marginBottom: 12,
