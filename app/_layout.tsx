@@ -3,6 +3,7 @@ import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import InitialLayout from '@/components/InitialLayout';
+import { AIChatbotProvider } from '@/contexts/ai-chatbot-context';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { COLORS } from '@/constants/theme';
@@ -23,9 +24,11 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <CartProvider>
             <WishlistProvider>
-              <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-                <InitialLayout />
-              </View>
+              <AIChatbotProvider>
+                <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+                  <InitialLayout />
+                </View>
+              </AIChatbotProvider>
             </WishlistProvider>
           </CartProvider>
         </SafeAreaProvider>
