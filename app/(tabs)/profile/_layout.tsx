@@ -18,6 +18,12 @@ export default function ProfileLayout() {
       <Stack.Screen name="wishlist" />
       <Stack.Screen name="linked-accounts" />
       <Stack.Screen name="membership" />
+      <Stack.Screen
+        name="chat-with-staff"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

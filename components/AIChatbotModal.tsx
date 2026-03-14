@@ -13,12 +13,12 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
-import { useChatService, COMPARE_SYSTEM_PROMPT, type ChatMessage } from '@/lib/services/chatService';
+import { useChatService, COMPARE_SYSTEM_PROMPT, type ChatMessage, type SendMessageResult } from '@/lib/services/chatService';
 import { searchProductsByName, fetchProductById, type ApiProduct } from '@/lib/productsApi';
 import { useWishlist } from '@/contexts/WishlistContext';
 import type { FabPosition } from '@/contexts/ai-chatbot-context';
@@ -32,6 +32,10 @@ function extractProductKeywords(text: string): string {
     if (out.startsWith(p)) out = out.slice(p.length).trim();
   }
   return out || lowered;
+}
+
+function uniqueId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function formatProductForCompare(p: ApiProduct): string {
@@ -143,19 +147,18 @@ export function AIChatbotModal({
       setMessages([{ id: '0', role: 'user', content: initialMessage }]);
       setLoading(true);
       const keywords = extractProductKeywords(initialMessage);
-      Promise.all([sendMessage([{ role: 'user', content: initialMessage }]), searchProductsByName(keywords)])
-        .then(([reply, products]) => {
-          const matched = products[0];
+      sendMessage([{ role: 'user', content: initialMessage }])
+        .then((result: SendMessageResult) => {
           const assistantMsg: DisplayMessage = {
             id: '1',
             role: 'assistant',
-            content: reply,
-            ...(matched && { productId: matched.id, productName: matched.name }),
+            content: result.content,
+            ...(result.primaryProductId && { productId: result.primaryProductId }),
           };
           setMessages((p) => [...p, assistantMsg]);
         })
         .catch((err) => {
-          setMessages((p) => [...p, { id: 'err', role: 'assistant', content: `❌ ${err instanceof Error ? err.message : 'Lỗi'}` }]);
+          setMessages((p) => [...p, { id: uniqueId('err'), role: 'assistant', content: `❌ ${err instanceof Error ? err.message : 'Lỗi'}` }]);
         })
         .finally(() => setLoading(false));
     } else if (initialMessage) {
@@ -202,7 +205,7 @@ export function AIChatbotModal({
       if (!toSend || loading) return;
 
       setInputText('');
-      const userMsg: DisplayMessage = { id: Date.now().toString(), role: 'user', content: toSend };
+      const userMsg: DisplayMessage = { id: uniqueId('user'), role: 'user', content: toSend };
       setMessages((prev) => (prev[0]?.id === 'welcome' ? [userMsg] : [...prev, userMsg]));
 
       setLoading(true);
@@ -216,7 +219,7 @@ export function AIChatbotModal({
           if (!product2) {
             setMessages((prev) => [
               ...prev.filter((m) => m.id !== 'temp'),
-              { id: 'temp', role: 'assistant', content: `Không tìm thấy sản phẩm "${toSend}" trong hệ thống. Vui lòng thử tên khác.` },
+              { id: uniqueId('msg'), role: 'assistant', content: `Không tìm thấy sản phẩm "${toSend}" trong hệ thống. Vui lòng thử tên khác.` },
             ]);
             setAwaitingCompareProductId(null);
             return;
@@ -226,7 +229,7 @@ export function AIChatbotModal({
           if (!product1) {
             setMessages((prev) => [
               ...prev.filter((m) => m.id !== 'temp'),
-              { id: 'temp', role: 'assistant', content: 'Không tìm thấy sản phẩm đầu tiên để so sánh.' },
+              { id: uniqueId('msg'), role: 'assistant', content: 'Không tìm thấy sản phẩm đầu tiên để so sánh.' },
             ]);
             return;
           }
@@ -235,28 +238,25 @@ export function AIChatbotModal({
             ...prevMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
             { role: 'user' as const, content: compareContent },
           ];
-          const reply = await sendMessage(history, { systemPrompt: COMPARE_SYSTEM_PROMPT });
-          setMessages((prev) => [...prev.filter((m) => m.id !== 'temp'), { id: 'temp', role: 'assistant', content: reply }]);
+          const result = await sendMessage(history, { systemPrompt: COMPARE_SYSTEM_PROMPT });
+          setMessages((prev) => [...prev.filter((m) => m.id !== 'temp'), { id: uniqueId('msg'), role: 'assistant', content: result.content }]);
         } else {
-          const keywords = extractProductKeywords(toSend);
-          const products = await searchProductsByName(keywords);
-          const matchedProduct = products[0];
           const history: ChatMessage[] = [
             ...prevMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
             { role: 'user' as const, content: toSend },
           ];
-          const reply = await sendMessage(history);
+          const result = await sendMessage(history);
           const assistantMsg: DisplayMessage = {
-            id: 'temp',
+            id: uniqueId('msg'),
             role: 'assistant',
-            content: reply,
-            ...(matchedProduct && { productId: matchedProduct.id, productName: matchedProduct.name }),
+            content: result.content,
+            ...(result.primaryProductId && { productId: result.primaryProductId }),
           };
           setMessages((prev) => [...prev.filter((m) => m.id !== 'temp'), assistantMsg]);
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Không thể kết nối AI. Vui lòng thử lại.';
-        setMessages((prev) => [...prev, { id: 'err', role: 'assistant', content: `❌ ${msg}` }]);
+        setMessages((prev) => [...prev, { id: uniqueId('err'), role: 'assistant', content: `❌ ${msg}` }]);
         setAwaitingCompareProductId(null);
       } finally {
         setLoading(false);
@@ -269,9 +269,9 @@ export function AIChatbotModal({
     (productId: string) => {
       setAwaitingCompareProductId(productId);
       const askMsg: DisplayMessage = {
-        id: `ask-compare-${Date.now()}`,
+        id: uniqueId('ask'),
         role: 'assistant',
-        content: 'Bạn muốn so sánh với sản phẩm nào? Nhập tên sản phẩm (ví dụ: Xiaomi Redmi Note 15)',
+        content: 'Nhập tên sản phẩm mà bạn muốn so sánh (ví dụ: Samsung Galaxy S24)',
       };
       setMessages((prev) => [...prev, askMsg]);
     },
@@ -290,6 +290,7 @@ export function AIChatbotModal({
       }
       try {
         await toggleWishlist(productId);
+        Alert.alert('Đã thêm', 'Sản phẩm đã được thêm vào danh sách yêu thích.');
       } catch {
         Alert.alert('Lỗi', 'Không thể thêm vào yêu thích. Vui lòng thử lại.');
       }
@@ -407,7 +408,7 @@ export function AIChatbotModal({
               </View>
             ))}
             {loading && (
-              <View style={styles.bubbleWrap}>
+              <View key="loading" style={styles.bubbleWrap}>
                 <View style={[styles.bubble, styles.bubbleBot, isPopover && styles.bubblePopover]}>
                   <ActivityIndicator size="small" color={COLORS.accentRed} />
                   <Text style={[styles.bubbleText, styles.bubbleTextBot, { marginLeft: 8 }]}>Đang suy nghĩ...</Text>

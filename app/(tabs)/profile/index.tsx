@@ -71,7 +71,7 @@ export default function Profile() {
 
   const otherItems = [
     { label: 'Sản phẩm yêu thích', icon: 'heart-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/wishlist') },
-    { label: 'Tư vấn và hỗ trợ', icon: 'headset-outline' as const, iconColor: accentRed, onPress: () => {} },
+    { label: 'Tư vấn và hỗ trợ', icon: 'chatbubbles-outline' as const, iconColor: accentRed, onPress: () => router.push('/(tabs)/profile/chat-with-staff') },
     { label: 'Điều khoản sử dụng', icon: 'document-text-outline' as const, iconColor: COLORS.grey, onPress: () => {} },
   ];
 
