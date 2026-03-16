@@ -173,6 +173,14 @@ export default function ProductDetailScreen() {
 
   const stock = product.stock ?? 0;
   const inStock = stock > 0;
+  const displayReviews =
+    product.reviews.totalReviews > 0
+      ? product.reviews
+      : getProductDetail(product.id).reviews;
+  const displayQuestions =
+    product.questions.length > 0
+      ? product.questions
+      : getProductDetail(product.id).questions;
 
   return (
     <View style={styles.screen}>
@@ -210,16 +218,51 @@ export default function ProductDetailScreen() {
           productName={product.name}
           features={product.features}
         />
-        {product.reviews.totalReviews > 0 && (
-          <ProductReviewsSection reviews={product.reviews} />
+        {displayReviews.totalReviews > 0 && (
+          <ProductReviewsSection
+            reviews={displayReviews}
+            onSeeAll={() =>
+              router.push({
+                pathname: '/product/[id]/reviews',
+                params: { id: product.id },
+              })
+            }
+            onWriteReview={() =>
+              router.push({
+                pathname: '/product/[id]/reviews',
+                params: { id: product.id },
+              })
+            }
+          />
         )}
         <RelatedProductsSection
           categoryId={product.categoryId}
           currentProductId={product.id}
         />
         <RelatedNewsSection news={product.relatedNews} />
-        <AskQuestionSection />
-        <QASection questions={product.questions} />
+        <AskQuestionSection
+          onAsk={() =>
+            router.push({
+              pathname: '/product/[id]/qa',
+              params: { id: product.id },
+            })
+          }
+        />
+        <QASection
+          questions={displayQuestions}
+          onSeeAll={() =>
+            router.push({
+              pathname: '/product/[id]/qa',
+              params: { id: product.id },
+            })
+          }
+          onReply={(questionId) =>
+            router.push({
+              pathname: '/product/[id]/qa',
+              params: { id: product.id, focusQuestionId: questionId },
+            })
+          }
+        />
         <View style={{ height: BOTTOM_BAR_HEIGHT }} />
       </ScrollView>
       <AddToCartToast

@@ -12,9 +12,15 @@ type ReviewsData = {
 
 type ProductReviewsSectionProps = {
   reviews: ReviewsData;
+  onSeeAll?: () => void;
+  onWriteReview?: () => void;
 };
 
-export function ProductReviewsSection({ reviews }: ProductReviewsSectionProps) {
+export function ProductReviewsSection({
+  reviews,
+  onSeeAll,
+  onWriteReview,
+}: ProductReviewsSectionProps) {
   const stars = [5, 4, 3, 2, 1];
   const maxCount = Math.max(...Object.values(reviews.distribution), 1);
 
@@ -22,7 +28,11 @@ export function ProductReviewsSection({ reviews }: ProductReviewsSectionProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Đánh giá sản phẩm</Text>
-        <TouchableOpacity activeOpacity={0.7}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={!onSeeAll}
+          onPress={onSeeAll}
+        >
           <Text style={styles.seeAll}>Xem tất cả &gt;</Text>
         </TouchableOpacity>
       </View>
@@ -91,6 +101,14 @@ export function ProductReviewsSection({ reviews }: ProductReviewsSectionProps) {
           ))}
         </View>
       )}
+      <TouchableOpacity
+        style={styles.writeButton}
+        activeOpacity={0.8}
+        onPress={onWriteReview ?? onSeeAll}
+        disabled={!onWriteReview && !onSeeAll}
+      >
+        <Text style={styles.writeButtonText}>Viết đánh giá</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -204,5 +222,18 @@ const styles = StyleSheet.create({
   experienceCount: {
     fontSize: 12,
     color: COLORS.cartTextSecondary,
+  },
+  writeButton: {
+    marginTop: 16,
+    alignSelf: 'flex-end',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 6,
+    backgroundColor: COLORS.accentRed,
+  },
+  writeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.white,
   },
 });

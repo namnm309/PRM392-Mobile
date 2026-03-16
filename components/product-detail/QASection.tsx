@@ -6,20 +6,26 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type QASectionProps = {
   questions: QuestionItem[];
+  onSeeAll?: () => void;
+  onReply?: (questionId: string) => void;
 };
 
 function getInitial(name: string) {
   return name.charAt(0).toUpperCase() || '?';
 }
 
-export function QASection({ questions }: QASectionProps) {
+export function QASection({ questions, onSeeAll, onReply }: QASectionProps) {
   if (!questions.length) return null;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Hỏi và đáp</Text>
-        <TouchableOpacity activeOpacity={0.7}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={!onSeeAll}
+          onPress={onSeeAll}
+        >
           <Text style={styles.seeAll}>Xem tất cả &gt;</Text>
         </TouchableOpacity>
       </View>
@@ -33,12 +39,19 @@ export function QASection({ questions }: QASectionProps) {
               <Text style={styles.userName}>{q.userName}</Text>
               <Text style={styles.timeAgo}>{q.timeAgo}</Text>
               <Text style={styles.question}>{q.question}</Text>
-              <TouchableOpacity style={styles.replyBtn} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.replyBtn}
+                activeOpacity={0.7}
+                onPress={() => onReply?.(q.id)}
+              >
                 <Ionicons name="chatbubble-outline" size={14} color={COLORS.accentRed} />
                 <Text style={styles.replyText}>Phản hồi</Text>
               </TouchableOpacity>
               {q.replyCount > 0 && (
-                <TouchableOpacity activeOpacity={0.7}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => onReply?.(q.id)}
+                >
                   <Text style={styles.viewReplies}>
                     Xem tất cả {q.replyCount} phản hồi v
                   </Text>
