@@ -50,6 +50,15 @@ export type ExperienceRating = {
   count: number;
 };
 
+export type ProductReviewItem = {
+  id: string;
+  userName: string;
+  rating: number;
+  content: string;
+  tags: string[];
+  createdAt: string;
+};
+
 export type ProductDetail = HomeProduct & {
   media: ProductMediaItem[];
   storageOptions?: StorageOption[];
@@ -65,6 +74,7 @@ export type ProductDetail = HomeProduct & {
     distribution: Record<number, number>;
     experienceRatings?: ExperienceRating[];
   };
+  reviewItems: ProductReviewItem[];
   relatedNews: RelatedNewsItem[];
   questions: QuestionItem[];
   storeBranches: StoreBranch[];
@@ -126,14 +136,46 @@ const DEFAULT_DETAIL: Omit<ProductDetail, keyof HomeProduct> = {
   categoryName: null,
   reviews: {
     rating: 5,
-    totalReviews: 9,
-    distribution: { 5: 9, 4: 0, 3: 0, 2: 0, 1: 0 },
+    totalReviews: 22,
+    distribution: { 5: 22, 4: 0, 3: 0, 2: 0, 1: 0 },
     experienceRatings: [
-      { label: 'Hiệu năng', rating: 5, count: 8 },
-      { label: 'Thời lượng pin', rating: 5, count: 8 },
-      { label: 'Chất lượng camera', rating: 5, count: 8 },
+      { label: 'Hiệu năng', rating: 5, count: 21 },
+      { label: 'Thời lượng pin', rating: 5, count: 21 },
+      { label: 'Chất lượng camera', rating: 5, count: 21 },
     ],
   },
+  reviewItems: [
+    {
+      id: 'r1',
+      userName: 'Tuyen',
+      rating: 5,
+      tags: [
+        'Hiệu năng',
+        'Siêu mạnh mẽ',
+        'Thời lượng pin',
+        'Cực khủng',
+        'Chất lượng camera',
+        'Chụp đẹp, chuyên nghiệp',
+      ],
+      content: 'hàng rất chi là tốt',
+      createdAt: '13/03/2026 01:50',
+    },
+    {
+      id: 'r2',
+      userName: 'Tuyen',
+      rating: 5,
+      tags: [
+        'Hiệu năng',
+        'Siêu mạnh mẽ',
+        'Thời lượng pin',
+        'Cực khủng',
+        'Chất lượng camera',
+        'Chụp đẹp, chuyên nghiệp',
+      ],
+      content: 'rất tốt ạ, hàng xuất sắc',
+      createdAt: '13/03/2026 01:41',
+    },
+  ],
   relatedNews: [
     {
       id: 'n1',

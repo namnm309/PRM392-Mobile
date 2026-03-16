@@ -3,7 +3,11 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export function AskQuestionSection() {
+type AskQuestionSectionProps = {
+  onAsk?: () => void;
+};
+
+export function AskQuestionSection({ onAsk }: AskQuestionSectionProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -12,7 +16,11 @@ export function AskQuestionSection() {
       <Text style={styles.description}>
         CellphoneS sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau. Thông tin có thể thay đổi theo thời gian, vui lòng đặt câu hỏi để nhận được cập nhật mới nhất!
       </Text>
-      <TouchableOpacity style={styles.button} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={styles.button}
+        activeOpacity={0.8}
+        onPress={onAsk}
+      >
         <Text style={styles.buttonText}>Gửi câu hỏi</Text>
         <Ionicons name="send" size={18} color={COLORS.white} />
       </TouchableOpacity>
