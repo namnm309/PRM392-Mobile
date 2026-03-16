@@ -1,20 +1,20 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { COLORS } from '@/constants/theme';
+import { createSupportChatConnection, type SupportChatMessage } from '@/lib/supportChatService';
 import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { createSupportChatConnection, type SupportChatMessage } from '@/lib/supportChatService';
-import { COLORS } from '@/constants/theme';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function ChatWithStaffScreen() {
   const router = useRouter();
@@ -25,34 +25,83 @@ export default function ChatWithStaffScreen() {
   const [connecting, setConnecting] = useState(true);
   const connectionRef = useRef<Awaited<ReturnType<typeof createSupportChatConnection>> | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const mountedRef = useRef(true);
+  const getTokenRef = useRef(getToken);
+
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
+
+  const scrollToEnd = useCallback(() => {
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+  }, []);
 
   const connect = useCallback(async () => {
+    connectionRef.current?.disconnect();
+    connectionRef.current = null;
     try {
       setError(null);
       setConnecting(true);
-      const conn = await createSupportChatConnection(getToken);
+      const conn = await createSupportChatConnection(() => getTokenRef.current());
+      if (!mountedRef.current) {
+        conn.disconnect();
+        return;
+      }
       connectionRef.current = conn;
       setMessages([...conn.messages]);
 
       conn.onNewMessage((msg) => {
+        if (!mountedRef.current) return;
         setMessages((prev) => [...prev, msg]);
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        scrollToEnd();
       });
 
       setConnecting(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể kết nối. Vui lòng thử lại.');
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Không thể kết nối. Vui lòng thử lại.');
+      }
       setConnecting(false);
     }
-  }, [getToken]);
+  }, [scrollToEnd]);
 
   useEffect(() => {
+    mountedRef.current = true;
     connect();
     return () => {
-      connectionRef.current?.disconnect().catch(() => {});
+      mountedRef.current = false;
+      connectionRef.current?.disconnect();
       connectionRef.current = null;
     };
   }, [connect]);
+
+  const listEmptyComponent = useMemo(
+    () => (
+      <View style={styles.empty}>
+        <Ionicons name="chatbubbles-outline" size={48} color={COLORS.grey} />
+        <Text style={styles.emptyText}>Chào bạn! Hãy gửi tin nhắn để được hỗ trợ.</Text>
+      </View>
+    ),
+    []
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: SupportChatMessage }) => {
+      const isUser = item.senderRole === 'user';
+      return (
+        <View style={[styles.bubbleWrap, isUser ? styles.bubbleUserWrap : styles.bubbleStaffWrap]}>
+          <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleStaff]}>
+            <Text style={[styles.bubbleSender, isUser && styles.bubbleSenderUser]}>{item.senderName}</Text>
+            <Text style={[styles.bubbleText, isUser && styles.bubbleTextUser]}>{item.content}</Text>
+            <Text style={[styles.bubbleTime, isUser && styles.bubbleTimeUser]}>
+              {new Date(item.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+          </View>
+        </View>
+      );
+    },
+    []
+  );
 
   const handleSend = async () => {
     const text = inputText.trim();
@@ -114,26 +163,12 @@ export default function ChatWithStaffScreen() {
               data={messages}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContent}
-              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-              ListEmptyComponent={
-                <View style={styles.empty}>
-                  <Ionicons name="chatbubbles-outline" size={48} color={COLORS.grey} />
-                  <Text style={styles.emptyText}>Chào bạn! Hãy gửi tin nhắn để được hỗ trợ.</Text>
-                </View>
-              }
-              renderItem={({ item }) => {
-                const isUser = item.senderRole === 'user';
-                return (
-                <View style={[styles.bubbleWrap, isUser ? styles.bubbleUserWrap : styles.bubbleStaffWrap]}>
-                  <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleStaff]}>
-                    <Text style={[styles.bubbleSender, isUser && styles.bubbleSenderUser]}>{item.senderName}</Text>
-                    <Text style={[styles.bubbleText, isUser && styles.bubbleTextUser]}>{item.content}</Text>
-                    <Text style={[styles.bubbleTime, isUser && styles.bubbleTimeUser]}>
-                      {new Date(item.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
-                </View>
-              );}}
+              onContentSizeChange={scrollToEnd}
+              initialNumToRender={20}
+              maxToRenderPerBatch={10}
+              removeClippedSubviews={Platform.OS === 'android'}
+              ListEmptyComponent={listEmptyComponent}
+              renderItem={renderItem}
             />
             <View style={styles.inputRow}>
               <TextInput

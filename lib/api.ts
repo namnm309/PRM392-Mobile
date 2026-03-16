@@ -1,10 +1,10 @@
+import { API_BASE_URL } from '@/constants/api';
 import { useAuth } from '@clerk/clerk-expo';
 import { useCallback, useMemo } from 'react';
-import { API_BASE_URL } from '@/constants/api';
 
 if (!API_BASE_URL) {
   console.warn(
-    'Warning: EXPO_PUBLIC_API_BASE_URL chưa được setup. Điền url vào file .env.local.'
+    'Warning: EXPO_PUBLIC_API_URL hoặc EXPO_PUBLIC_API_BASE_URL chưa được setup. Điền url vào file .env.local.'
   );
 }
 

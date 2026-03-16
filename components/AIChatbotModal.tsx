@@ -22,6 +22,7 @@ import { useChatService, COMPARE_SYSTEM_PROMPT, type ChatMessage, type SendMessa
 import { searchProductsByName, fetchProductById, type ApiProduct } from '@/lib/productsApi';
 import { useWishlist } from '@/contexts/WishlistContext';
 import type { FabPosition } from '@/contexts/ai-chatbot-context';
+import { useAIChatbot } from '@/contexts/ai-chatbot-context';
 import { COLORS } from '@/constants/theme';
 
 function extractProductKeywords(text: string): string {
@@ -74,11 +75,7 @@ function getPopoverPosition(fab: FabPosition, insets: { top: number; bottom: num
   return { top, left };
 }
 
-interface DisplayMessage extends ChatMessage {
-  id: string;
-  productId?: string;
-  productName?: string;
-}
+type DisplayMessage = import('@/contexts/ai-chatbot-context').ChatbotDisplayMessage;
 
 type AIChatbotModalProps = {
   visible: boolean;
@@ -101,17 +98,19 @@ const POPOVER_STYLES = {
 export function AIChatbotModal({
   visible,
   onClose,
-  initialMessage = '',
-  autoSend = false,
+  initialMessage: initialMessageProp,
+  autoSend: autoSendProp,
   popoverMode = false,
   fabPosition = { x: 0, y: 0 },
 }: AIChatbotModalProps) {
   const { sendMessage } = useChatService();
   const { isSignedIn } = useAuth();
   const { toggleWishlist, isWishlisted } = useWishlist();
+  const { messages, setMessages, initialMessage: ctxInitial, autoSend: ctxAutoSend } = useAIChatbot();
+  const initialMessage = initialMessageProp ?? ctxInitial ?? '';
+  const autoSend = autoSendProp ?? ctxAutoSend ?? false;
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
-  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [awaitingCompareProductId, setAwaitingCompareProductId] = useState<string | null>(null);
@@ -127,6 +126,7 @@ export function AIChatbotModal({
     []
   );
 
+  /** Chỉ khởi tạo khi mở modal lần đầu và chưa có tin nhắn. Giữ lịch sử chat khi đóng/mở lại. */
   const initDoneRef = useRef(false);
 
   const popoverPos = useMemo(
@@ -135,18 +135,18 @@ export function AIChatbotModal({
   );
 
   useEffect(() => {
-    if (!visible) {
-      initDoneRef.current = false;
+    if (!visible) return;
+    if (messages.length > 0 && !initialMessage) {
+      initDoneRef.current = true;
       return;
     }
-    if (initDoneRef.current) return;
+    if (initDoneRef.current && !initialMessage) return;
     initDoneRef.current = true;
 
     setAwaitingCompareProductId(null);
     if (initialMessage && autoSend) {
       setMessages([{ id: '0', role: 'user', content: initialMessage }]);
       setLoading(true);
-      const keywords = extractProductKeywords(initialMessage);
       sendMessage([{ role: 'user', content: initialMessage }])
         .then((result: SendMessageResult) => {
           const assistantMsg: DisplayMessage = {
@@ -166,7 +166,7 @@ export function AIChatbotModal({
     } else {
       setMessages([welcomeMsg]);
     }
-  }, [visible, initialMessage, autoSend, sendMessage, welcomeMsg]);
+  }, [visible, initialMessage, autoSend, sendMessage, welcomeMsg, messages.length]);
 
   useEffect(() => {
     if (popoverMode && visible) {
@@ -340,14 +340,26 @@ export function AIChatbotModal({
               <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Điện thoại nào đang giảm giá?')} activeOpacity={0.8} disabled={loading}>
                 <Text style={styles.popoverChipText}>Sản phẩm giảm giá</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Tư vấn điện thoại tầm 10 triệu')} activeOpacity={0.8} disabled={loading}>
+                <Text style={styles.popoverChipText}>Điện thoại</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Đồng hồ thông minh nào tốt cho chạy bộ?')} activeOpacity={0.8} disabled={loading}>
+                <Text style={styles.popoverChipText}>Đồng hồ thông minh</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Máy tính bảng cho học online và giải trí?')} activeOpacity={0.8} disabled={loading}>
+                <Text style={styles.popoverChipText}>Máy tính bảng</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Laptop gaming giá tốt?')} activeOpacity={0.8} disabled={loading}>
+                <Text style={styles.popoverChipText}>Laptop</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Tai nghe chống ồn ANC tốt?')} activeOpacity={0.8} disabled={loading}>
+                <Text style={styles.popoverChipText}>Tai nghe</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Chính sách bảo hành như thế nào?')} activeOpacity={0.8} disabled={loading}>
                 <Text style={styles.popoverChipText}>Bảo hành</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Cách đặt hàng và thanh toán?')} activeOpacity={0.8} disabled={loading}>
                 <Text style={styles.popoverChipText}>Đặt hàng & thanh toán</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Tư vấn iPhone 15')} activeOpacity={0.8} disabled={loading}>
-                <Text style={styles.popoverChipText}>Tư vấn sản phẩm (ví dụ)</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
