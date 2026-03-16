@@ -154,6 +154,7 @@ export function mapApiProductToProductDetail(
     specsList,
     features: features.length > 0 ? features : (api.description ? [api.description] : []),
     reviews: { rating: 0, totalReviews: 0, distribution: {} },
+    reviewItems: [],
     relatedNews: [],
     questions: [],
     storeBranches: DEFAULT_STORE_BRANCHES,

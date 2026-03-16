@@ -97,11 +97,11 @@ type AIChatbotModalProps = {
 };
 
 const POPOVER_STYLES = {
-  bg: 'rgba(21, 25, 32, 0.96)',
-  header: 'rgba(26, 31, 42, 0.98)',
-  card: 'rgba(30, 35, 46, 0.98)',
-  text: '#f0f2f5',
-  textSecondary: '#94a3b8',
+  bg: '#FFFFFF',
+  header: '#FFFFFF',
+  card: '#FFFFFF',
+  text: '#111111',
+  textSecondary: '#6B7280',
   accent: COLORS.accentRed,
 };
 
