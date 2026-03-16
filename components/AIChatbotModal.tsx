@@ -18,12 +18,22 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
-import { useChatService, COMPARE_SYSTEM_PROMPT, type ChatMessage, type SendMessageResult } from '@/lib/services/chatService';
+import {
+  useChatService,
+  COMPARE_SYSTEM_PROMPT,
+  type ChatMessage,
+  type SendMessageResult,
+} from '@/lib/services/chatService';
 import { searchProductsByName, fetchProductById, type ApiProduct } from '@/lib/productsApi';
 import { useWishlist } from '@/contexts/WishlistContext';
 import type { FabPosition } from '@/contexts/ai-chatbot-context';
 import { useAIChatbot } from '@/contexts/ai-chatbot-context';
 import { COLORS } from '@/constants/theme';
+import {
+  createSupportChatConnection,
+  type SupportChatConnection,
+  type SupportChatMessage,
+} from '@/lib/supportChatService';
 
 function extractProductKeywords(text: string): string {
   const lowered = text.trim().toLowerCase();
@@ -104,7 +114,7 @@ export function AIChatbotModal({
   fabPosition = { x: 0, y: 0 },
 }: AIChatbotModalProps) {
   const { sendMessage } = useChatService();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { messages, setMessages, initialMessage: ctxInitial, autoSend: ctxAutoSend } = useAIChatbot();
   const initialMessage = initialMessageProp ?? ctxInitial ?? '';
@@ -114,6 +124,13 @@ export function AIChatbotModal({
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [awaitingCompareProductId, setAwaitingCompareProductId] = useState<string | null>(null);
+  const [mode, setMode] = useState<'ai' | 'human'>('ai');
+
+  // Human support chat state (dùng chung backend với màn Tư vấn & hỗ trợ)
+  const [supportMessages, setSupportMessages] = useState<SupportChatMessage[]>([]);
+  const [supportConnecting, setSupportConnecting] = useState(false);
+  const [supportError, setSupportError] = useState<string | null>(null);
+  const supportConnRef = useRef<SupportChatConnection | null>(null);
   const popoverAnim = useRef(new Animated.Value(0)).current;
   const isClosingRef = useRef(false);
 
@@ -135,7 +152,7 @@ export function AIChatbotModal({
   );
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || mode !== 'ai') return;
     if (messages.length > 0 && !initialMessage) {
       initDoneRef.current = true;
       return;
@@ -166,7 +183,7 @@ export function AIChatbotModal({
     } else {
       setMessages([welcomeMsg]);
     }
-  }, [visible, initialMessage, autoSend, sendMessage, welcomeMsg, messages.length]);
+  }, [visible, initialMessage, autoSend, sendMessage, welcomeMsg, messages.length, mode]);
 
   useEffect(() => {
     if (popoverMode && visible) {
@@ -187,6 +204,18 @@ export function AIChatbotModal({
     }
   }, [messages]);
 
+  // Dọn kết nối hỗ trợ khi modal đóng
+  useEffect(() => {
+    if (!visible && supportConnRef.current) {
+      supportConnRef.current.disconnect();
+      supportConnRef.current = null;
+      setSupportMessages([]);
+      setSupportError(null);
+      setSupportConnecting(false);
+      setMode('ai');
+    }
+  }, [visible]);
+
   const handlePopoverClose = useCallback(() => {
     if (!popoverMode || isClosingRef.current) return;
     isClosingRef.current = true;
@@ -201,6 +230,20 @@ export function AIChatbotModal({
 
   const handleSend = useCallback(
     async (text?: string) => {
+      // Mode chat người: gửi qua SupportChat
+      if (mode === 'human') {
+        const toSend = (text ?? inputText).trim();
+        if (!toSend || !supportConnRef.current || supportConnecting) return;
+        setInputText('');
+        try {
+          await supportConnRef.current.sendMessage(toSend);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Gửi thất bại';
+          setSupportError(msg);
+        }
+        return;
+      }
+
       const toSend = (text ?? inputText).trim();
       if (!toSend || loading) return;
 
@@ -262,7 +305,7 @@ export function AIChatbotModal({
         setLoading(false);
       }
     },
-    [inputText, loading, messages, sendMessage, awaitingCompareProductId]
+    [inputText, loading, messages, sendMessage, awaitingCompareProductId, mode, supportConnecting]
   );
 
   const handleCompareClick = useCallback(
@@ -300,7 +343,34 @@ export function AIChatbotModal({
 
   const isPopover = popoverMode;
   const hasUserMessages = messages.some((m) => m.role === 'user');
-  const showWelcomeChips = isPopover && !hasUserMessages;
+  const showWelcomeChips = isPopover && !hasUserMessages && mode === 'ai';
+
+  const enterHumanSupport = useCallback(async () => {
+    if (!isSignedIn) {
+      Alert.alert('Đăng nhập', 'Vui lòng đăng nhập để chat với nhân viên.');
+      return;
+    }
+    // Đã có connection → chỉ chuyển mode
+    if (supportConnRef.current) {
+      setMode('human');
+      return;
+    }
+    try {
+      setSupportError(null);
+      setSupportConnecting(true);
+      const conn = await createSupportChatConnection(getToken);
+      supportConnRef.current = conn;
+      setSupportMessages([...conn.messages]);
+      conn.onNewMessage((msg) => {
+        setSupportMessages((prev) => [...prev, msg]);
+      });
+      setMode('human');
+    } catch (err) {
+      setSupportError(err instanceof Error ? err.message : 'Không thể kết nối nhân viên. Vui lòng thử lại.');
+    } finally {
+      setSupportConnecting(false);
+    }
+  }, [getToken, isSignedIn]);
 
   const content = (
     <KeyboardAvoidingView
@@ -315,8 +385,14 @@ export function AIChatbotModal({
             </LinearGradient>
           </View>
           <View>
-            <Text style={[styles.headerTitle, isPopover && { color: POPOVER_STYLES.text, fontSize: 16 }]}>TechStore AI</Text>
-            {isPopover && <Text style={[styles.headerSubtitle, { color: POPOVER_STYLES.textSecondary }]}>• Trợ lý mua sắm</Text>}
+            <Text style={[styles.headerTitle, isPopover && { color: POPOVER_STYLES.text, fontSize: 16 }]}>
+              {mode === 'ai' ? 'TechStore AI' : 'Hỗ trợ khách hàng'}
+            </Text>
+            {isPopover && (
+              <Text style={[styles.headerSubtitle, { color: POPOVER_STYLES.textSecondary }]}>
+                {mode === 'ai' ? '• Trợ lý mua sắm' : '• Nhân viên tư vấn'}
+              </Text>
+            )}
           </View>
         </View>
         <TouchableOpacity onPress={isPopover ? handlePopoverClose : onClose} style={styles.closeBtn} hitSlop={12}>
@@ -393,33 +469,98 @@ export function AIChatbotModal({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled>
-            {messages.map((msg) => (
-              <View key={msg.id} style={[styles.bubbleWrap, msg.role === 'user' ? styles.bubbleUserWrap : styles.bubbleBotWrap]}>
-                <View style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot, isPopover && styles.bubblePopover, (msg.role === 'assistant' && msg.productId) && styles.bubbleWithActions]}>
-                  <Text style={[styles.bubbleText, msg.role === 'user' ? styles.bubbleTextUser : styles.bubbleTextBot, isPopover && { fontSize: 14 }]}>{msg.content}</Text>
-                  {msg.role === 'assistant' && msg.productId && (
-                    <View style={styles.actionButtons}>
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.actionBtnCompare]}
-                        onPress={() => handleCompareClick(msg.productId!)}
-                        activeOpacity={0.8}>
-                        <Ionicons name="git-compare-outline" size={16} color={COLORS.accentRed} />
-                        <Text style={styles.actionBtnText}>So sánh</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.actionBtnWishlist]}
-                        onPress={() => handleWishlistClick(msg.productId!)}
-                        activeOpacity={0.8}
-                        disabled={loading}>
-                        <Ionicons name={isWishlisted(msg.productId) ? 'heart' : 'heart-outline'} size={16} color={COLORS.accentRed} />
-                        <Text style={styles.actionBtnText}>{isWishlisted(msg.productId) ? 'Đã yêu thích' : 'Yêu thích'}</Text>
-                      </TouchableOpacity>
+            {mode === 'ai'
+              ? messages.map((msg) => (
+                  <View
+                    key={msg.id}
+                    style={[styles.bubbleWrap, msg.role === 'user' ? styles.bubbleUserWrap : styles.bubbleBotWrap]}>
+                    <View
+                      style={[
+                        styles.bubble,
+                        msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot,
+                        isPopover && styles.bubblePopover,
+                        msg.role === 'assistant' && msg.productId && styles.bubbleWithActions,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.bubbleText,
+                          msg.role === 'user' ? styles.bubbleTextUser : styles.bubbleTextBot,
+                          isPopover && { fontSize: 14 },
+                        ]}>
+                        {msg.content}
+                      </Text>
+                      {msg.role === 'assistant' && msg.productId && (
+                        <View style={styles.actionButtons}>
+                          <TouchableOpacity
+                            style={[styles.actionBtn, styles.actionBtnCompare]}
+                            onPress={() => handleCompareClick(msg.productId!)}
+                            activeOpacity={0.8}>
+                            <Ionicons name="git-compare-outline" size={16} color={COLORS.accentRed} />
+                            <Text style={styles.actionBtnText}>So sánh</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.actionBtn, styles.actionBtnWishlist]}
+                            onPress={() => handleWishlistClick(msg.productId!)}
+                            activeOpacity={0.8}
+                            disabled={loading}>
+                            <Ionicons
+                              name={isWishlisted(msg.productId) ? 'heart' : 'heart-outline'}
+                              size={16}
+                              color={COLORS.accentRed}
+                            />
+                            <Text style={styles.actionBtnText}>
+                              {isWishlisted(msg.productId) ? 'Đã yêu thích' : 'Yêu thích'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
-                  )}
-                </View>
-              </View>
-            ))}
-            {loading && (
+                  </View>
+                ))
+              : supportMessages.map((msg) => {
+                  const isUser = msg.senderRole === 'user';
+                  return (
+                    <View
+                      key={msg.id}
+                      style={[styles.bubbleWrap, isUser ? styles.bubbleUserWrap : styles.bubbleBotWrap]}>
+                      <View
+                        style={[
+                          styles.bubble,
+                          isUser ? styles.bubbleUser : styles.bubbleBot,
+                          isPopover && styles.bubblePopover,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.bubbleSender,
+                            isUser ? styles.bubbleSenderUser : undefined,
+                            isPopover && { fontSize: 11 },
+                          ]}>
+                          {msg.senderName}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.bubbleText,
+                            isUser ? styles.bubbleTextUser : styles.bubbleTextBot,
+                            isPopover && { fontSize: 14 },
+                          ]}>
+                          {msg.content}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.bubbleTime,
+                            isUser ? styles.bubbleTimeUser : undefined,
+                            isPopover && { fontSize: 10 },
+                          ]}>
+                          {new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+            {mode === 'ai' && loading && (
               <View key="loading" style={styles.bubbleWrap}>
                 <View style={[styles.bubble, styles.bubbleBot, isPopover && styles.bubblePopover]}>
                   <ActivityIndicator size="small" color={COLORS.accentRed} />
@@ -427,25 +568,80 @@ export function AIChatbotModal({
                 </View>
               </View>
             )}
+            {mode === 'human' && supportConnecting && (
+              <View key="loading-human" style={styles.bubbleWrap}>
+                <View style={[styles.bubble, styles.bubbleBot, isPopover && styles.bubblePopover]}>
+                  <ActivityIndicator size="small" color={COLORS.accentRed} />
+                  <Text style={[styles.bubbleText, styles.bubbleTextBot, { marginLeft: 8 }]}>
+                    Đang kết nối nhân viên...
+                  </Text>
+                </View>
+              </View>
+            )}
+            {mode === 'human' && supportError && (
+              <View key="error-human" style={styles.bubbleWrap}>
+                <View style={[styles.bubble, styles.bubbleBot, isPopover && styles.bubblePopover]}>
+                  <Text style={[styles.bubbleText, styles.bubbleTextBot]}>❌ {supportError}</Text>
+                </View>
+              </View>
+            )}
           </ScrollView>
 
-          <View style={[styles.inputRow, isPopover && { backgroundColor: POPOVER_STYLES.header, borderTopColor: 'rgba(255,255,255,0.1)' }]}>
+          <View
+            style={[
+              styles.inputRow,
+              isPopover && { backgroundColor: POPOVER_STYLES.header, borderTopColor: 'rgba(255,255,255,0.1)' },
+            ]}>
+            {/* Nút chuyển AI / Hỗ trợ */}
+            <TouchableOpacity
+              style={styles.supportBtn}
+              activeOpacity={0.8}
+              onPress={() => {
+                if (mode === 'ai') {
+                  void enterHumanSupport();
+                } else {
+                  setMode('ai');
+                }
+              }}>
+              <Ionicons
+                name={mode === 'ai' ? 'headset-outline' : 'sparkles'}
+                size={18}
+                color={isPopover ? POPOVER_STYLES.text : COLORS.accentRed}
+              />
+              <Text style={[styles.supportBtnText, isPopover && { color: POPOVER_STYLES.text }]}>
+                {mode === 'ai' ? 'Hỗ trợ' : 'AI'}
+              </Text>
+            </TouchableOpacity>
             <TextInput
               style={[styles.input, isPopover && { backgroundColor: POPOVER_STYLES.card, color: POPOVER_STYLES.text }]}
-              placeholder={awaitingCompareProductId ? 'Nhập tên sản phẩm để so sánh...' : 'Nhập câu hỏi...'}
+              placeholder={
+                mode === 'human'
+                  ? 'Nhập tin nhắn tới nhân viên...'
+                  : awaitingCompareProductId
+                  ? 'Nhập tên sản phẩm để so sánh...'
+                  : 'Nhập câu hỏi...'
+              }
               placeholderTextColor={isPopover ? POPOVER_STYLES.textSecondary : COLORS.grey}
               value={inputText}
               onChangeText={setInputText}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
-              editable={!loading}
+              editable={mode === 'human' ? !!supportConnRef.current && !supportConnecting : !loading}
               multiline
               maxLength={1000}
             />
             <TouchableOpacity
-              style={[styles.sendBtn, (!inputText.trim() || loading) && styles.sendBtnDisabled]}
+              style={[
+                styles.sendBtn,
+                (!inputText.trim() ||
+                  (mode === 'ai' ? loading : supportConnecting || !supportConnRef.current)) &&
+                  styles.sendBtnDisabled,
+              ]}
               onPress={() => handleSend()}
-              disabled={!inputText.trim() || loading}>
+              disabled={
+                !inputText.trim() ||
+                (mode === 'ai' ? loading : supportConnecting || !supportConnRef.current)
+              }>
               <Ionicons name="send" size={20} color="#FFF" />
             </TouchableOpacity>
           </View>
@@ -625,6 +821,23 @@ const styles = StyleSheet.create({
   bubbleTextBot: {
     color: COLORS.cartTextPrimary,
   },
+  bubbleSender: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.grey,
+    marginBottom: 4,
+  },
+  bubbleSenderUser: {
+    color: 'rgba(255,255,255,0.9)',
+  },
+  bubbleTime: {
+    fontSize: 11,
+    color: COLORS.grey,
+    marginTop: 4,
+  },
+  bubbleTimeUser: {
+    color: 'rgba(255,255,255,0.8)',
+  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -655,6 +868,21 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: {
     opacity: 0.5,
+  },
+  supportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginRight: 4,
+    borderRadius: 16,
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+  },
+  supportBtnText: {
+    marginLeft: 4,
+    fontSize: 13,
+    color: COLORS.grey,
+    fontWeight: '500',
   },
   popoverWelcome: {
     flex: 1,

@@ -18,7 +18,7 @@ import { TabScreenWrapper } from '@/components/TabScreenWrapper';
 
 export default function Profile() {
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarBottomPadding = useTabBarBottomPadding();
@@ -26,6 +26,21 @@ export default function Profile() {
 
   const handleLogout = async () => {
     try {
+      // Xóa lịch sử chat hỗ trợ trên backend trước khi đăng xuất
+      try {
+        const token = await getToken();
+        if (token) {
+          await fetch(`${process.env.EXPO_PUBLIC_API_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? ''}/api/support-chat/messages`, {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).catch(() => {});
+        }
+      } catch {
+        // Bỏ qua lỗi xóa lịch sử, vẫn cho logout bình thường
+      }
+
       await signOut();
     } catch (error) {
       console.error('Logout error:', error);
