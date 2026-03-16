@@ -375,8 +375,9 @@ export function AIChatbotModal({
   const content = (
     <KeyboardAvoidingView
       style={[styles.body, isPopover && { height: POPOVER_MAX_HEIGHT, borderRadius: 16, overflow: 'hidden' }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // Khi là bottom sheet (không phải popover), đẩy toàn bộ modal lên một chút để lộ ô input
+      keyboardVerticalOffset={isPopover ? 0 : 80}>
       <View style={[styles.header, isPopover && { backgroundColor: POPOVER_STYLES.header, paddingVertical: 12 }]}>
         <View style={styles.headerLeft}>
           <View style={[styles.botAvatar, isPopover && { width: 40, height: 40 }]}>

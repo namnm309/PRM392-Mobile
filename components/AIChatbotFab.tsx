@@ -25,11 +25,11 @@ export function AIChatbotFab() {
   const insets = useSafeAreaInsets();
   const { openChatbot, closeChatbot, visible, fabPosition, setFabPosition } = useAIChatbot();
 
-  const bottomBarHeight = 70 + insets.bottom;
-  const safeTop = insets.top + 8;
-  const safeBottom = SCREEN_HEIGHT - bottomBarHeight - FAB_SIZE - 12;
-  const safeLeft = 12;
-  const safeRight = SCREEN_WIDTH - FAB_SIZE - 16;
+  // Cho phép FAB di chuyển gần như toàn màn hình, chỉ chừa mép rất mỏng
+  const safeTop = insets.top; // tránh đè status bar
+  const safeBottom = SCREEN_HEIGHT - FAB_SIZE; // không vượt khỏi đáy
+  const safeLeft = 0;
+  const safeRight = SCREEN_WIDTH - FAB_SIZE;
   const initY = safeBottom - 12;
   const initX = safeRight;
 
