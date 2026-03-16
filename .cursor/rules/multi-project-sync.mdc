@@ -1,0 +1,23 @@
+---
+description: Khi sửa PRM392-Mobile phải kiểm tra đồng bộ với BE và Dashboard
+alwaysApply: true
+---
+
+# Đồng bộ 3 dự án TechStore
+
+Khi sửa **PRM392-Mobile**, bắt buộc kiểm tra và cập nhật tương ứng ở:
+
+## 1. PRM392-Mobile-BE (Backend)
+- `TechStoreController/Program.cs` – AddSignalR, MapHub, middleware
+- `TechStoreController/appsettings.json` – ReturnUrl, CORS
+- `ClerkJwtBearerPostConfigure.cs` – đọc `access_token` từ query cho `/hubs/`
+
+## 2. PRM392-TechStore-AdminDasboard (Admin Web)
+- `src/lib/api.ts` – API_BASE_URL, override TechStoreBE:80
+- `src/app/admin/chat/page.tsx` – SignalR hub URL
+- `.env.local.example`, `.github/workflows/` – env vars
+
+## URL cần đồng bộ
+- Backend: `https://techstorebe-fzaza5cvgbhah6fg.eastasia-01.azurewebsites.net`
+- Hub: `.../hubs/support-chat`
+- **Không dùng** `TechStoreBE:80` (gây 404)
