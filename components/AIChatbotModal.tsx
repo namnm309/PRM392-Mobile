@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
-  Animated,
   Dimensions,
   KeyboardAvoidingView,
   Modal,
@@ -16,6 +15,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import {
@@ -59,6 +66,7 @@ const FAB_SIZE = 56;
 const POPOVER_WIDTH = Math.min(SCREEN_W - 24, 360);
 const POPOVER_MAX_HEIGHT = Math.min(SCREEN_H * 0.65, 440);
 const GAP = 10;
+const SPRING_CONFIG = { damping: 22, stiffness: 180 };
 
 function getPopoverPosition(fab: FabPosition, insets: { top: number; bottom: number }) {
   const pad = 8;
@@ -131,8 +139,13 @@ export function AIChatbotModal({
   const [supportConnecting, setSupportConnecting] = useState(false);
   const [supportError, setSupportError] = useState<string | null>(null);
   const supportConnRef = useRef<SupportChatConnection | null>(null);
-  const popoverAnim = useRef(new Animated.Value(0)).current;
   const isClosingRef = useRef(false);
+  const popoverOpacity = useSharedValue(0);
+  const popoverScale = useSharedValue(0.9);
+  const popoverTranslateX = useSharedValue(0);
+  const popoverTranslateY = useSharedValue(0);
+  const popoverStartX = useSharedValue(0);
+  const popoverStartY = useSharedValue(0);
 
   const welcomeMsg = useMemo<DisplayMessage>(
     () => ({
@@ -149,6 +162,16 @@ export function AIChatbotModal({
   const popoverPos = useMemo(
     () => (popoverMode && fabPosition ? getPopoverPosition(fabPosition, insets) : { top: 0, left: 0 }),
     [popoverMode, fabPosition.x, fabPosition.y, insets.top, insets.bottom]
+  );
+
+  const popoverBounds = useMemo(
+    () => ({
+      minX: 8 - popoverPos.left,
+      maxX: SCREEN_W - POPOVER_WIDTH - 8 - popoverPos.left,
+      minY: insets.top + 8 - popoverPos.top,
+      maxY: SCREEN_H - insets.bottom - POPOVER_MAX_HEIGHT - 8 - popoverPos.top,
+    }),
+    [popoverPos.left, popoverPos.top, insets.top, insets.bottom]
   );
 
   useEffect(() => {
@@ -188,15 +211,14 @@ export function AIChatbotModal({
   useEffect(() => {
     if (popoverMode && visible) {
       isClosingRef.current = false;
-      popoverAnim.setValue(0);
-      Animated.spring(popoverAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 65,
-        friction: 11,
-      }).start();
+      popoverOpacity.value = 0;
+      popoverScale.value = 0.9;
+      popoverTranslateX.value = 0;
+      popoverTranslateY.value = 0;
+      popoverOpacity.value = withTiming(1, { duration: 180 });
+      popoverScale.value = withSpring(1, SPRING_CONFIG);
     }
-  }, [popoverMode, visible]);
+  }, [popoverMode, visible, popoverOpacity, popoverScale, popoverTranslateX, popoverTranslateY]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -219,14 +241,13 @@ export function AIChatbotModal({
   const handlePopoverClose = useCallback(() => {
     if (!popoverMode || isClosingRef.current) return;
     isClosingRef.current = true;
-    Animated.timing(popoverAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (finished) onClose();
+    popoverOpacity.value = withTiming(0, { duration: 180 });
+    popoverScale.value = withTiming(0.9, { duration: 180 }, (finished) => {
+      if (finished) {
+        runOnJS(onClose)();
+      }
     });
-  }, [popoverMode, onClose]);
+  }, [popoverMode, onClose, popoverOpacity, popoverScale]);
 
   const handleSend = useCallback(
     async (text?: string) => {
@@ -345,6 +366,55 @@ export function AIChatbotModal({
   const hasUserMessages = messages.some((m) => m.role === 'user');
   const showWelcomeChips = isPopover && !hasUserMessages && mode === 'ai';
 
+  const popoverAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: isPopover ? popoverOpacity.value : 1,
+    transform: isPopover
+      ? [
+          { translateX: popoverTranslateX.value },
+          { translateY: popoverTranslateY.value },
+          { scale: popoverScale.value },
+        ]
+      : [],
+  }));
+
+  const popoverDragGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(isPopover)
+        .minDistance(4)
+        .onStart(() => {
+          popoverStartX.value = popoverTranslateX.value;
+          popoverStartY.value = popoverTranslateY.value;
+        })
+        .onUpdate((event) => {
+          const nextX = Math.max(
+            popoverBounds.minX,
+            Math.min(popoverBounds.maxX, popoverStartX.value + event.translationX)
+          );
+          const nextY = Math.max(
+            popoverBounds.minY,
+            Math.min(popoverBounds.maxY, popoverStartY.value + event.translationY)
+          );
+          popoverTranslateX.value = nextX;
+          popoverTranslateY.value = nextY;
+        })
+        .onEnd(() => {
+          popoverTranslateX.value = withSpring(popoverTranslateX.value, SPRING_CONFIG);
+          popoverTranslateY.value = withSpring(popoverTranslateY.value, SPRING_CONFIG);
+        }),
+    [
+      isPopover,
+      popoverBounds.maxX,
+      popoverBounds.maxY,
+      popoverBounds.minX,
+      popoverBounds.minY,
+      popoverStartX,
+      popoverStartY,
+      popoverTranslateX,
+      popoverTranslateY,
+    ]
+  );
+
   const enterHumanSupport = useCallback(async () => {
     if (!isSignedIn) {
       Alert.alert('Đăng nhập', 'Vui lòng đăng nhập để chat với nhân viên.');
@@ -379,23 +449,41 @@ export function AIChatbotModal({
       // Khi là bottom sheet (không phải popover), đẩy toàn bộ modal lên một chút để lộ ô input
       keyboardVerticalOffset={isPopover ? 0 : 80}>
       <View style={[styles.header, isPopover && { backgroundColor: POPOVER_STYLES.header, paddingVertical: 12 }]}>
-        <View style={styles.headerLeft}>
-          <View style={[styles.botAvatar, isPopover && { width: 40, height: 40 }]}>
-            <LinearGradient colors={['#E53935', '#D32F2F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.botAvatarGradient}>
-              <Ionicons name="sparkles" size={isPopover ? 20 : 22} color="#FFF" />
-            </LinearGradient>
-          </View>
-          <View>
-            <Text style={[styles.headerTitle, isPopover && { color: POPOVER_STYLES.text, fontSize: 16 }]}>
-              {mode === 'ai' ? 'TechStore AI' : 'Hỗ trợ khách hàng'}
-            </Text>
-            {isPopover && (
-              <Text style={[styles.headerSubtitle, { color: POPOVER_STYLES.textSecondary }]}>
-                {mode === 'ai' ? '• Trợ lý mua sắm' : '• Nhân viên tư vấn'}
+        {isPopover ? (
+          <GestureDetector gesture={popoverDragGesture}>
+            <View style={styles.headerDragArea}>
+              <View style={styles.headerLeft}>
+                <View style={[styles.botAvatar, isPopover && { width: 40, height: 40 }]}>
+                  <LinearGradient colors={['#E53935', '#D32F2F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.botAvatarGradient}>
+                    <Ionicons name="sparkles" size={isPopover ? 20 : 22} color="#FFF" />
+                  </LinearGradient>
+                </View>
+                <View>
+                  <Text style={[styles.headerTitle, isPopover && { color: POPOVER_STYLES.text, fontSize: 16 }]}>
+                    {mode === 'ai' ? 'TechStore AI' : 'Hỗ trợ khách hàng'}
+                  </Text>
+                  <Text style={[styles.headerSubtitle, { color: POPOVER_STYLES.textSecondary }]}>
+                    {mode === 'ai' ? '• Trợ lý mua sắm' : '• Nhân viên tư vấn'}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="move-outline" size={18} color={POPOVER_STYLES.textSecondary} />
+            </View>
+          </GestureDetector>
+        ) : (
+          <View style={styles.headerLeft}>
+            <View style={[styles.botAvatar, isPopover && { width: 40, height: 40 }]}>
+              <LinearGradient colors={['#E53935', '#D32F2F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.botAvatarGradient}>
+                <Ionicons name="sparkles" size={isPopover ? 20 : 22} color="#FFF" />
+              </LinearGradient>
+            </View>
+            <View>
+              <Text style={[styles.headerTitle, isPopover && { color: POPOVER_STYLES.text, fontSize: 16 }]}>
+                {mode === 'ai' ? 'TechStore AI' : 'Hỗ trợ khách hàng'}
               </Text>
-            )}
+            </View>
           </View>
-        </View>
+        )}
         <TouchableOpacity onPress={isPopover ? handlePopoverClose : onClose} style={styles.closeBtn} hitSlop={12}>
           <Ionicons name="close" size={22} color={isPopover ? POPOVER_STYLES.text : COLORS.cartTextPrimary} />
         </TouchableOpacity>
@@ -664,21 +752,13 @@ export function AIChatbotModal({
         <Animated.View
           style={[
             isPopover
-              ? {
-                  position: 'absolute',
-                  zIndex: 1,
-                  top: popoverPos.top,
-                  left: popoverPos.left,
-                  width: POPOVER_WIDTH,
-                  maxHeight: POPOVER_MAX_HEIGHT,
-                  backgroundColor: POPOVER_STYLES.bg,
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  opacity: popoverAnim,
-                  transform: [{ scale: popoverAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
-                  ...(Platform.OS === 'android' ? { elevation: 12 } : { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12 }),
-                }
+              ? styles.popoverModal
               : styles.modal,
+            isPopover && {
+              top: popoverPos.top,
+              left: popoverPos.left,
+            },
+            isPopover && popoverAnimatedStyle,
             !isPopover && { paddingBottom: insets.bottom + 16 },
           ]}>
           {content}
@@ -704,6 +784,23 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
     minHeight: 400,
   },
+  popoverModal: {
+    position: 'absolute',
+    zIndex: 1,
+    width: POPOVER_WIDTH,
+    maxHeight: POPOVER_MAX_HEIGHT,
+    backgroundColor: POPOVER_STYLES.bg,
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...(Platform.OS === 'android'
+      ? { elevation: 12 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
+        }),
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -716,6 +813,15 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  headerDragArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    marginVertical: -4,
+    marginRight: 8,
   },
   botAvatar: {
     width: 36,
