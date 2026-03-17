@@ -1,6 +1,7 @@
 import type { HomeProduct } from '@/constants/homeProductData';
 import { COLORS } from '@/constants/theme';
 import { fetchProducts, mapApiProductToHomeProduct } from '@/lib/productsApi';
+import { fetchReviewSummaries } from '@/lib/reviewsApi';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -34,13 +35,29 @@ export function RelatedProductsSection({
     setError(null);
 
     fetchProducts({ categoryId, limit: 12 })
-      .then((data) => {
+      .then(async (data) => {
         if (cancelled) return;
         const mapped = data
           .map(mapApiProductToHomeProduct)
           .filter((p) => p.id !== currentProductId)
           .slice(0, 6);
-        setProducts(mapped);
+        const summaries = await fetchReviewSummaries(
+          mapped.map((p) => p.id),
+          { concurrency: 6 },
+        );
+        if (cancelled) return;
+        setProducts(
+          mapped.map((p) => {
+            const s = summaries[p.id];
+            return {
+              ...p,
+              rating:
+                s && s.totalReviews > 0 && s.avgRating != null
+                  ? s.avgRating
+                  : undefined,
+            };
+          }),
+        );
       })
       .catch((err) => {
         if (cancelled) return;

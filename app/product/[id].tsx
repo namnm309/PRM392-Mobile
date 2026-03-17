@@ -183,6 +183,13 @@ export default function ProductDetailScreen() {
 
   const stock = product.stock ?? 0;
   const inStock = stock > 0;
+  const avgRating =
+    reviews.length > 0
+      ? Math.round(
+          (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length) *
+            10,
+        ) / 10
+      : undefined;
 
   return (
     <View style={styles.screen}>
@@ -200,7 +207,7 @@ export default function ProductDetailScreen() {
         <ProductTitleSection
           productId={product.id}
           name={product.name}
-          rating={product.rating}
+          rating={avgRating}
           inStock={inStock}
         />
         {product.saleEndCountdown && (

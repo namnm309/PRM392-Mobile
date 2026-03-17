@@ -49,6 +49,89 @@ export async function fetchReviews(
   return json.data ?? [];
 }
 
+export type ReviewSummary = {
+  avgRating: number | null;
+  totalReviews: number;
+};
+
+type ReviewSummaryCacheEntry = {
+  createdAtMs: number;
+  promise: Promise<ReviewSummary>;
+};
+
+const REVIEW_SUMMARY_TTL_MS = 3 * 60_000; // 3 minutes
+const reviewSummaryCache = new Map<string, ReviewSummaryCacheEntry>();
+
+function computeReviewSummary(reviews: ReviewResponseDto[]): ReviewSummary {
+  const totalReviews = reviews.length;
+  if (totalReviews === 0) return { avgRating: null, totalReviews: 0 };
+
+  const sum = reviews.reduce((s, r) => s + (r.rating ?? 0), 0);
+  const avgRating = Math.round((sum / totalReviews) * 10) / 10;
+  return { avgRating, totalReviews };
+}
+
+export async function fetchReviewSummary(
+  productId: string,
+): Promise<ReviewSummary> {
+  const now = Date.now();
+  const cached = reviewSummaryCache.get(productId);
+  if (cached && now - cached.createdAtMs < REVIEW_SUMMARY_TTL_MS) {
+    return cached.promise;
+  }
+
+  const promise = fetchReviews(productId)
+    .then((reviews) => computeReviewSummary(reviews))
+    .catch(() => ({ avgRating: null, totalReviews: 0 } satisfies ReviewSummary));
+
+  reviewSummaryCache.set(productId, { createdAtMs: now, promise });
+  return promise;
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (true) {
+      const i = nextIndex++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i]);
+    }
+  }
+
+  const workers = new Array(Math.min(concurrency, items.length))
+    .fill(0)
+    .map(() => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+export async function fetchReviewSummaries(
+  productIds: string[],
+  opts?: { concurrency?: number },
+): Promise<Record<string, ReviewSummary>> {
+  const ids = Array.from(new Set(productIds.filter(Boolean)));
+  const concurrency = Math.max(1, opts?.concurrency ?? 6);
+
+  const summaries = await mapWithConcurrency(ids, concurrency, async (id) => ({
+    id,
+    summary: await fetchReviewSummary(id),
+  }));
+
+  return summaries.reduce(
+    (acc, cur) => {
+      acc[cur.id] = cur.summary;
+      return acc;
+    },
+    {} as Record<string, ReviewSummary>,
+  );
+}
+
 export async function createReview(
   data: CreateReviewRequest,
   getToken: () => Promise<string | null>,

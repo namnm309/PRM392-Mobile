@@ -29,12 +29,62 @@ export const PHONE_BRANDS: string[] = [
   'Điện thoại phổ thông',
 ];
 
-export const PRICE_SEGMENTS: string[] = [
-  'Dưới 2 triệu',
-  'Từ 2 - 4 triệu',
-  'Từ 4 - 7 triệu',
-  'Từ 13 - 20 triệu',
-  'Trên 20 triệu',
+export type PriceSegment = {
+  label: string;
+  minPrice?: number;
+  maxPrice?: number;
+};
+
+export const CATEGORY_PRICE_SEGMENTS: Record<string, PriceSegment[]> = {
+  'Điện thoại': [
+    { label: 'Dưới 22 triệu', maxPrice: 22_000_000 },
+    { label: 'Từ 22 - 26 triệu', minPrice: 22_000_000, maxPrice: 26_000_000 },
+    { label: 'Từ 26 - 30 triệu', minPrice: 26_000_000, maxPrice: 30_000_000 },
+    { label: 'Trên 30 triệu', minPrice: 30_000_000 },
+  ],
+  'Tablet': [
+    { label: 'Dưới 10 triệu', maxPrice: 10_000_000 },
+    { label: 'Từ 10 - 15 triệu', minPrice: 10_000_000, maxPrice: 15_000_000 },
+    { label: 'Từ 15 - 20 triệu', minPrice: 15_000_000, maxPrice: 20_000_000 },
+    { label: 'Trên 20 triệu', minPrice: 20_000_000 },
+  ],
+  'Laptop': [
+    { label: 'Dưới 20 triệu', maxPrice: 20_000_000 },
+    { label: 'Từ 20 - 30 triệu', minPrice: 20_000_000, maxPrice: 30_000_000 },
+    { label: 'Từ 30 - 45 triệu', minPrice: 30_000_000, maxPrice: 45_000_000 },
+    { label: 'Trên 45 triệu', minPrice: 45_000_000 },
+  ],
+  'Âm thanh': [
+    { label: 'Dưới 5 triệu', maxPrice: 5_000_000 },
+    { label: 'Từ 5 - 10 triệu', minPrice: 5_000_000, maxPrice: 10_000_000 },
+    { label: 'Trên 10 triệu', minPrice: 10_000_000 },
+  ],
+  'Đồng hồ': [
+    { label: 'Dưới 3 triệu', maxPrice: 3_000_000 },
+    { label: 'Từ 3 - 5 triệu', minPrice: 3_000_000, maxPrice: 5_000_000 },
+    { label: 'Từ 5 - 10 triệu', minPrice: 5_000_000, maxPrice: 10_000_000 },
+    { label: 'Trên 10 triệu', minPrice: 10_000_000 },
+  ],
+  'Camera': [
+    { label: 'Dưới 10 triệu', maxPrice: 10_000_000 },
+    { label: 'Từ 10 - 20 triệu', minPrice: 10_000_000, maxPrice: 20_000_000 },
+    { label: 'Từ 20 - 40 triệu', minPrice: 20_000_000, maxPrice: 40_000_000 },
+    { label: 'Trên 40 triệu', minPrice: 40_000_000 },
+  ],
+  'Gia dụng': [
+    { label: 'Dưới 3 triệu', maxPrice: 3_000_000 },
+    { label: 'Từ 3 - 5 triệu', minPrice: 3_000_000, maxPrice: 5_000_000 },
+    { label: 'Từ 5 - 10 triệu', minPrice: 5_000_000, maxPrice: 10_000_000 },
+    { label: 'Trên 10 triệu', minPrice: 10_000_000 },
+  ],
+};
+
+export const DEFAULT_PRICE_SEGMENTS: PriceSegment[] = [
+  { label: 'Dưới 5 triệu', maxPrice: 5_000_000 },
+  { label: 'Từ 5 - 10 triệu', minPrice: 5_000_000, maxPrice: 10_000_000 },
+  { label: 'Từ 10 - 20 triệu', minPrice: 10_000_000, maxPrice: 20_000_000 },
+  { label: 'Từ 20 - 30 triệu', minPrice: 20_000_000, maxPrice: 30_000_000 },
+  { label: 'Trên 30 triệu', minPrice: 30_000_000 },
 ];
 
 export type HotProductItem = {

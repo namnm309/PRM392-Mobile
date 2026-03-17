@@ -17,6 +17,13 @@ export function ProductTitleSection({
   rating,
   inStock = true,
 }: ProductTitleSectionProps) {
+  const ratingText =
+    rating == null
+      ? null
+      : Number.isInteger(rating)
+        ? String(rating)
+        : rating.toFixed(1);
+
   return (
     <View style={styles.container}>
       <Text style={styles.name} numberOfLines={2}>
@@ -24,12 +31,6 @@ export function ProductTitleSection({
       </Text>
       <View style={styles.row}>
         <View style={styles.leftCol}>
-          {rating != null && (
-            <View style={styles.rating}>
-              <Ionicons name="star" size={18} color="#FFC107" />
-              <Text style={styles.ratingText}>{rating}/5</Text>
-            </View>
-          )}
           <View style={styles.stockRow}>
             <View
               style={[
@@ -45,6 +46,15 @@ export function ProductTitleSection({
             >
               {inStock ? 'Còn hàng' : 'Hết hàng'}
             </Text>
+            {ratingText && (
+              <>
+                <View style={styles.stockDivider} />
+                <View style={styles.inlineRating}>
+                  <Ionicons name="star" size={14} color="#FFC107" />
+                  <Text style={styles.inlineRatingText}>{ratingText}</Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
         <View style={styles.wishlist}>
@@ -83,15 +93,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: 4,
   },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    fontSize: 14,
-    color: COLORS.cartTextSecondary,
-  },
   wishlist: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -101,6 +102,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  stockDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: COLORS.categoryChipBorder,
+    marginHorizontal: 4,
+  },
+  inlineRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  inlineRatingText: {
+    fontSize: 13,
+    color: COLORS.cartTextSecondary,
+    fontWeight: '600',
   },
   stockDot: {
     width: 10,
