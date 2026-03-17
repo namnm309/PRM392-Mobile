@@ -1,5 +1,5 @@
 import { AddToCartToast } from '@/components/AddToCartToast';
-import { AskQuestionSection } from '@/components/product-detail/AskQuestionSection';
+
 import { KeyFeaturesSection } from '@/components/product-detail/KeyFeaturesSection';
 import { PaymentOffersSection } from '@/components/product-detail/PaymentOffersSection';
 import { ProductCommitments } from '@/components/product-detail/ProductCommitments';
@@ -14,7 +14,7 @@ import { QASection } from '@/components/product-detail/QASection';
 import { RelatedNewsSection } from '@/components/product-detail/RelatedNewsSection';
 import { RelatedProductsSection } from '@/components/product-detail/RelatedProductsSection';
 import { SaleCountdownBanner } from '@/components/product-detail/SaleCountdownBanner';
-import { StoreBranchesSection } from '@/components/product-detail/StoreBranchesSection';
+
 import { TechSpecsSection } from '@/components/product-detail/TechSpecsSection';
 import { getProductDetail } from '@/constants/productDetailData';
 import type { ProductDetail } from '@/constants/productDetailData';
@@ -24,6 +24,8 @@ import {
   fetchProductById,
   mapApiProductToProductDetail,
 } from '@/lib/productsApi';
+import { fetchReviews, type ReviewResponseDto } from '@/lib/reviewsApi';
+import { fetchComments, type ProductCommentResponseDto } from '@/lib/commentsApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import React, { useEffect, useRef, useState } from 'react';
@@ -50,6 +52,9 @@ export default function ProductDetailScreen() {
   const [showAddToCartToast, setShowAddToCartToast] = useState(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [reviews, setReviews] = useState<ReviewResponseDto[]>([]);
+  const [comments, setComments] = useState<ProductCommentResponseDto[]>([]);
+
   useEffect(() => {
     const productId = id ?? '';
     if (!productId) {
@@ -62,7 +67,7 @@ export default function ProductDetailScreen() {
     setLoading(true);
     setError(null);
 
-    fetchProductById(productId)
+    const loadProduct = fetchProductById(productId)
       .then((apiProduct) => {
         if (cancelled) return;
         if (apiProduct) {
@@ -81,10 +86,19 @@ export default function ProductDetailScreen() {
         } catch {
           setProduct(null);
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
       });
+
+    const loadReviews = fetchReviews(productId)
+      .then((data) => { if (!cancelled) setReviews(data); })
+      .catch(() => { if (!cancelled) setReviews([]); });
+
+    const loadComments = fetchComments(productId)
+      .then((data) => { if (!cancelled) setComments(data); })
+      .catch(() => { if (!cancelled) setComments([]); });
+
+    Promise.all([loadProduct, loadReviews, loadComments]).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
     return () => {
       cancelled = true;
@@ -122,7 +136,6 @@ export default function ProductDetailScreen() {
     if ((product.stock ?? 0) <= 0) {
       return;
     }
-    // Add to cart first
     await addToCart({
       id: product.id,
       name: product.name,
@@ -130,10 +143,8 @@ export default function ProductDetailScreen() {
       priceOriginal: product.priceOriginal,
       imageUri: product.imageUri,
     });
-    // Select only this product for checkout
     selectOnly(product.id);
 
-    // If chưa đăng nhập thì đưa sang màn login, đăng nhập xong quay lại checkout
     if (!isSignedIn) {
       router.push({
         pathname: '/(auth)/login',
@@ -142,7 +153,6 @@ export default function ProductDetailScreen() {
       return;
     }
 
-    // Nếu đã đăng nhập thì đi thẳng sang checkout
     router.push('/checkout');
   };
 
@@ -173,14 +183,6 @@ export default function ProductDetailScreen() {
 
   const stock = product.stock ?? 0;
   const inStock = stock > 0;
-  const displayReviews =
-    product.reviews.totalReviews > 0
-      ? product.reviews
-      : getProductDetail(product.id).reviews;
-  const displayQuestions =
-    product.questions.length > 0
-      ? product.questions
-      : getProductDetail(product.id).questions;
 
   return (
     <View style={styles.screen}>
@@ -209,7 +211,7 @@ export default function ProductDetailScreen() {
           colorOptions={product.colorOptions}
           tradeInPrice={product.tradeInPrice}
         />
-        <StoreBranchesSection branches={product.storeBranches} />
+
         <PromotionsSection />
         <ProductCommitments />
         <PaymentOffersSection />
@@ -218,48 +220,44 @@ export default function ProductDetailScreen() {
           productName={product.name}
           features={product.features}
         />
-        {displayReviews.totalReviews > 0 && (
-          <ProductReviewsSection
-            reviews={displayReviews}
-            onSeeAll={() =>
-              router.push({
-                pathname: '/product/[id]/reviews',
-                params: { id: product.id },
-              })
-            }
-            onWriteReview={() =>
-              router.push({
-                pathname: '/product/[id]/reviews',
-                params: { id: product.id },
-              })
-            }
-          />
-        )}
+        <ProductReviewsSection
+          reviews={reviews}
+          onSeeAll={() =>
+            router.push({
+              pathname: '/product/[id]/reviews',
+              params: { id: product.id },
+            })
+          }
+          onWriteReview={() =>
+            router.push({
+              pathname: '/product/[id]/reviews',
+              params: { id: product.id },
+            })
+          }
+        />
         <RelatedProductsSection
           categoryId={product.categoryId}
           currentProductId={product.id}
         />
         <RelatedNewsSection news={product.relatedNews} />
-        <AskQuestionSection
+        <QASection
+          comments={comments}
           onAsk={() =>
             router.push({
               pathname: '/product/[id]/qa',
               params: { id: product.id },
             })
           }
-        />
-        <QASection
-          questions={displayQuestions}
           onSeeAll={() =>
             router.push({
               pathname: '/product/[id]/qa',
               params: { id: product.id },
             })
           }
-          onReply={(questionId) =>
+          onReply={(commentId) =>
             router.push({
               pathname: '/product/[id]/qa',
-              params: { id: product.id, focusQuestionId: questionId },
+              params: { id: product.id, focusQuestionId: commentId },
             })
           }
         />
