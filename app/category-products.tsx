@@ -10,7 +10,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,22 +20,30 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type BrandScreenParams = {
-  brandId?: string;
-  brandName?: string;
+type Params = {
+  categoryId?: string;
+  categoryName?: string;
+  priceLabel?: string;
+  minPrice?: string;
+  maxPrice?: string;
 };
 
-export default function BrandScreen() {
+function formatPrice(v: number) {
+  return new Intl.NumberFormat("vi-VN").format(v) + "₫";
+}
+
+export default function CategoryProductsScreen() {
   const tabBarBottomPadding = useTabBarBottomPadding();
-  const { brandId, brandName } = useLocalSearchParams<BrandScreenParams>();
   const router = useRouter();
+  const { categoryId, categoryName, priceLabel, minPrice, maxPrice } =
+    useLocalSearchParams<Params>();
+
   const [products, setProducts] = useState<HomeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSort, setActiveSort] = useState<
-    "popular" | "promo" | "price" | "filter"
+    "popular" | "promo" | "price-asc" | "price-desc"
   >("popular");
-  const [selectedCriteria, setSelectedCriteria] = useState<string[]>([]);
   const { width } = useWindowDimensions();
 
   const columns = 2;
@@ -44,42 +51,18 @@ export default function BrandScreen() {
   const horizontalPadding = 16;
   const cardWidth =
     (width - horizontalPadding * 2 - gap * (columns - 1)) / columns;
-  const bannerImageUri = products[0]?.imageUri ?? null;
 
-  const displayedProducts = useMemo(() => {
-    let list = [...products];
+  const minP = minPrice ? Number(minPrice) : undefined;
+  const maxP = maxPrice ? Number(maxPrice) : undefined;
 
-    if (activeSort === "promo") {
-      list = list.filter((p) => (p.discountPercent ?? 0) > 0);
-    } else if (activeSort === "price") {
-      list = [...list].sort((a, b) => a.priceCurrent - b.priceCurrent);
-    }
-
-    // Hiện tại chưa áp dụng filter từ selectedCriteria,
-    // nhưng vẫn giữ state để sẵn sàng mở rộng sau.
-
-    return list;
-  }, [products, activeSort]);
-
-  const criteriaOptions = [
-    { id: "instock", label: "Sẵn sàng", icon: "car-outline" as const },
-    {
-      id: "priceView",
-      label: "Xem theo giá",
-      icon: "pricetag-outline" as const,
-    },
-    { id: "new", label: "Hàng mới về", icon: "cart-outline" as const },
-  ];
-
-  const handleToggleCriterion = (id: string) => {
-    setSelectedCriteria((current) =>
-      current.includes(id) ? current.filter((c) => c !== id) : [...current, id],
-    );
-  };
+  const title =
+    priceLabel && categoryName
+      ? `${categoryName} - ${priceLabel}`
+      : categoryName ?? "Sản phẩm";
 
   useEffect(() => {
-    if (!brandId) {
-      setError("Thiếu thông tin thương hiệu");
+    if (!categoryId) {
+      setError("Thiếu thông tin danh mục");
       setLoading(false);
       return;
     }
@@ -88,17 +71,23 @@ export default function BrandScreen() {
     setLoading(true);
     setError(null);
 
-    fetchProducts({ brandId })
+    fetchProducts({ categoryId })
       .then(async (data) => {
         if (cancelled) return;
         const mapped = data.map(mapApiProductToHomeProduct);
+        const filtered = mapped.filter((p) => {
+          const price = p.priceCurrent;
+          if (minP != null && price < minP) return false;
+          if (maxP != null && price >= maxP) return false;
+          return true;
+        });
         const summaries = await fetchReviewSummaries(
-          mapped.map((p) => p.id),
+          filtered.map((p) => p.id),
           { concurrency: 6 },
         );
         if (cancelled) return;
         setProducts(
-          mapped.map((p) => {
+          filtered.map((p) => {
             const s = summaries[p.id];
             return {
               ...p,
@@ -120,7 +109,30 @@ export default function BrandScreen() {
     return () => {
       cancelled = true;
     };
-  }, [brandId]);
+  }, [categoryId, minP, maxP]);
+
+  const displayedProducts = useMemo(() => {
+    const list = [...products];
+    switch (activeSort) {
+      case "promo":
+        return list.filter((p) => (p.discountPercent ?? 0) > 0);
+      case "price-asc":
+        return list.sort((a, b) => a.priceCurrent - b.priceCurrent);
+      case "price-desc":
+        return list.sort((a, b) => b.priceCurrent - a.priceCurrent);
+      default:
+        return list;
+    }
+  }, [products, activeSort]);
+
+  const priceRangeText =
+    minP != null && maxP != null
+      ? `${formatPrice(minP)} - ${formatPrice(maxP)}`
+      : minP != null
+        ? `Từ ${formatPrice(minP)}`
+        : maxP != null
+          ? `Dưới ${formatPrice(maxP)}`
+          : null;
 
   return (
     <TabScreenWrapper>
@@ -147,10 +159,7 @@ export default function BrandScreen() {
                   placeholderTextColor={COLORS.categoryChipTextSecondary}
                   style={styles.searchInput}
                   returnKeyType="search"
-                  onFocus={() => {
-                    // Điều hướng sang màn search khi chạm vào thanh search
-                    router.push("/search" as const);
-                  }}
+                  onFocus={() => router.push("/search" as const)}
                 />
               </View>
             </View>
@@ -164,65 +173,26 @@ export default function BrandScreen() {
             ]}
             showsVerticalScrollIndicator={false}
           >
-            {bannerImageUri && (
-              <View style={styles.bannerContainer}>
-                <Image
-                  source={{ uri: bannerImageUri }}
-                  style={styles.bannerImage}
-                  resizeMode="cover"
+            <Text style={styles.title}>{title}</Text>
+
+            {priceRangeText && (
+              <View style={styles.priceRangeBadge}>
+                <Ionicons
+                  name="pricetag-outline"
+                  size={14}
+                  color={COLORS.accentRed}
                 />
+                <Text style={styles.priceRangeText}>{priceRangeText}</Text>
               </View>
             )}
-
-            <Text style={styles.title}>{brandName ?? "Thương hiệu"}</Text>
-
-            <View style={styles.criteriaSection}>
-              <Text style={styles.criteriaTitle}>Chọn theo tiêu chí</Text>
-              <View style={styles.criteriaRow}>
-                {criteriaOptions.map((option) => {
-                  const selected = selectedCriteria.includes(option.id);
-                  return (
-                    <TouchableOpacity
-                      key={option.id}
-                      style={[
-                        styles.criteriaChip,
-                        selected && styles.criteriaChipSelected,
-                      ]}
-                      activeOpacity={0.7}
-                      onPress={() => handleToggleCriterion(option.id)}
-                    >
-                      <View style={styles.criteriaChipContent}>
-                        <Ionicons
-                          name={option.icon}
-                          size={18}
-                          color={
-                            selected
-                              ? COLORS.accentRed
-                              : COLORS.categoryChipText
-                          }
-                        />
-                        <Text
-                          style={[
-                            styles.criteriaChipText,
-                            selected && styles.criteriaChipTextSelected,
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
 
             <View style={styles.sortTabsRow}>
               {(
                 [
                   { id: "popular", label: "Phổ biến" },
                   { id: "promo", label: "Khuyến mãi" },
-                  { id: "price", label: "Giá" },
-                  { id: "filter", label: "Bộ lọc" },
+                  { id: "price-asc", label: "Giá tăng" },
+                  { id: "price-desc", label: "Giá giảm" },
                 ] as const
               ).map((tab, index, arr) => {
                 const isActive = activeSort === tab.id;
@@ -261,19 +231,31 @@ export default function BrandScreen() {
               </View>
             ) : products.length === 0 ? (
               <View style={styles.centered}>
-                <Text style={styles.emptyText}>Chưa có sản phẩm</Text>
+                <Ionicons
+                  name="bag-outline"
+                  size={48}
+                  color={COLORS.categoryChipBorder}
+                />
+                <Text style={styles.emptyText}>
+                  Không có sản phẩm trong phân khúc giá này
+                </Text>
               </View>
             ) : (
-              <View style={styles.productsGrid}>
-                {displayedProducts.map((product) => (
-                  <View
-                    key={product.id}
-                    style={[styles.productItem, { width: cardWidth }]}
-                  >
-                    <ProductCard product={product} width={cardWidth} />
-                  </View>
-                ))}
-              </View>
+              <>
+                <Text style={styles.resultCount}>
+                  {displayedProducts.length} sản phẩm
+                </Text>
+                <View style={styles.productsGrid}>
+                  {displayedProducts.map((product) => (
+                    <View
+                      key={product.id}
+                      style={[styles.productItem, { width: cardWidth }]}
+                    >
+                      <ProductCard product={product} width={cardWidth} />
+                    </View>
+                  ))}
+                </View>
+              </>
             )}
           </ScrollView>
         </SafeAreaView>
@@ -307,13 +289,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   searchInputWrap: {
-    flexShrink: 1,
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.white,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 1,
+    marginLeft: 8,
   },
   searchIcon: {
     marginRight: 6,
@@ -327,9 +310,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: COLORS.cartTextPrimary,
-    marginHorizontal: 16,
     marginTop: 8,
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  priceRangeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: "#FFF3F3",
+    borderRadius: 16,
+    alignSelf: "flex-start",
+  },
+  priceRangeText: {
+    fontSize: 13,
+    color: COLORS.accentRed,
+    fontWeight: "600",
   },
   contentScroll: {
     flex: 1,
@@ -338,57 +336,6 @@ const styles = StyleSheet.create({
   contentScrollContent: {
     paddingHorizontal: 16,
     paddingTop: 4,
-  },
-  bannerContainer: {
-    marginBottom: 12,
-  },
-  bannerImage: {
-    width: "100%",
-    height: 140,
-    borderRadius: 12,
-    backgroundColor: "#f2f2f2",
-  },
-  criteriaSection: {
-    marginBottom: 12,
-  },
-  criteriaTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.cartTextPrimary,
-    marginBottom: 8,
-  },
-  criteriaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  criteriaChip: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: COLORS.categoryChipBorder,
-    backgroundColor: COLORS.categoryContentBg,
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  criteriaChipSelected: {
-    borderColor: COLORS.accentRed,
-    backgroundColor: "#ffecec",
-  },
-  criteriaChipContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-  },
-  criteriaChipText: {
-    fontSize: 13,
-    color: COLORS.categoryChipText,
-  },
-  criteriaChipTextSelected: {
-    color: COLORS.accentRed,
-    fontWeight: "600",
   },
   sortTabsRow: {
     flexDirection: "row",
@@ -421,17 +368,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.categoryChipBorder,
   },
   centered: {
-    paddingVertical: 24,
+    paddingVertical: 48,
     alignItems: "center",
     justifyContent: "center",
+    gap: 12,
   },
   errorText: {
     fontSize: 13,
     color: COLORS.categoryChipText,
   },
   emptyText: {
+    fontSize: 14,
+    color: COLORS.categoryChipTextSecondary,
+    textAlign: "center",
+  },
+  resultCount: {
     fontSize: 13,
-    color: COLORS.categoryChipText,
+    color: COLORS.categoryChipTextSecondary,
+    marginBottom: 8,
   },
   productsGrid: {
     flexDirection: "row",

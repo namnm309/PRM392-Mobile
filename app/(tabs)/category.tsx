@@ -1,25 +1,28 @@
 import { CategoryHeader } from "@/components/CategoryHeader";
 import { TabScreenWrapper } from "@/components/TabScreenWrapper";
+import {
+    CATEGORY_PRICE_SEGMENTS,
+    DEFAULT_PRICE_SEGMENTS,
+    type PriceSegment,
+} from "@/constants/categoryData";
 import { COLORS } from "@/constants/theme";
 import { useTabBarBottomPadding } from "@/hooks/useTabBarBottomPadding";
 import type { ApiCategory } from "@/lib/categoriesApi";
 import { fetchCategories } from "@/lib/categoriesApi";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const SIDEBAR_WIDTH = 88;
 
 export default function CategoryScreen() {
   const tabBarBottomPadding = useTabBarBottomPadding();
@@ -35,6 +38,12 @@ export default function CategoryScreen() {
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { width } = useWindowDimensions();
+
+  const sidebarWidth = useMemo(() => {
+    // Sidebar nhỏ hơn để nhường chỗ cho Hãng/Phân khúc giá
+    const w = Math.round(width * 0.25); // ~25% màn hình
+    return Math.max(64, Math.min(120, w));
+  }, [width]);
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
   const categoryLabel = selectedCategory?.name ?? "Danh mục";
@@ -65,7 +74,11 @@ export default function CategoryScreen() {
   }, [paramCategoryId]);
 
   const brands = selectedCategory?.brands ?? [];
-  const contentWidth = width - SIDEBAR_WIDTH;
+  const priceSegments: PriceSegment[] = useMemo(() => {
+    const name = selectedCategory?.name ?? "";
+    return CATEGORY_PRICE_SEGMENTS[name] ?? DEFAULT_PRICE_SEGMENTS;
+  }, [selectedCategory?.name]);
+  const contentWidth = width - sidebarWidth;
   const brandGap = 8;
   const brandColumns = 3;
   const brandTileWidth =
@@ -97,7 +110,11 @@ export default function CategoryScreen() {
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <CategoryHeader />
           <View style={styles.body}>
-            <View style={styles.sidebar}>
+            <ScrollView
+              style={[styles.sidebar, { width: sidebarWidth }]}
+              contentContainerStyle={styles.sidebarContent}
+              showsVerticalScrollIndicator={false}
+            >
               {categories.map((cat) => {
                 const isSelected = cat.id === selectedCategoryId;
                 return (
@@ -124,7 +141,7 @@ export default function CategoryScreen() {
                       ) : (
                         <Ionicons
                           name="grid-outline"
-                          size={36}
+                          size={40}
                           color={
                             isSelected
                               ? COLORS.accentRed
@@ -145,7 +162,7 @@ export default function CategoryScreen() {
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
             <ScrollView
               style={styles.contentScroll}
               contentContainerStyle={[
@@ -164,12 +181,7 @@ export default function CategoryScreen() {
                   {brands.length === 0 ? (
                     <Text style={styles.emptyText}>Chưa có thương hiệu</Text>
                   ) : (
-                    <View
-                      style={[
-                        styles.brandRow,
-                        { width: contentWidth },
-                      ]}
-                    >
+                    <View style={[styles.brandRow, { width: contentWidth }]}>
                       {brands.map((brand) => (
                         <TouchableOpacity
                           key={brand.id}
@@ -207,6 +219,38 @@ export default function CategoryScreen() {
                   )}
                 </View>
               )}
+
+              {selectedCategory && priceSegments.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Phân khúc giá</Text>
+                  <View style={styles.chipRow}>
+                    {priceSegments.map((seg) => (
+                      <TouchableOpacity
+                        key={seg.label}
+                        style={styles.priceChip}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          const params: Record<string, string> = {
+                            categoryId: selectedCategory.id,
+                            categoryName: selectedCategory.name,
+                            priceLabel: seg.label,
+                          };
+                          if (seg.minPrice != null)
+                            params.minPrice = String(seg.minPrice);
+                          if (seg.maxPrice != null)
+                            params.maxPrice = String(seg.maxPrice);
+                          router.push({
+                            pathname: "/category-products" as never,
+                            params,
+                          });
+                        }}
+                      >
+                        <Text style={styles.priceChipText}>{seg.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
             </ScrollView>
           </View>
         </SafeAreaView>
@@ -234,17 +278,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   sidebar: {
-    width: SIDEBAR_WIDTH,
+    flexGrow: 0,
+    flexShrink: 0,
     backgroundColor: COLORS.categoryContentBg,
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: COLORS.categoryChipBorder,
   },
+  sidebarContent: {
+    paddingBottom: 24,
+  },
   sidebarItem: {
     paddingVertical: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 96,
+    minHeight: 90,
     position: "relative",
   },
   sidebarItemSelected: {
@@ -259,21 +307,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accentRed,
   },
   sidebarIconWrap: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 6,
   },
   sidebarIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
+    width: 60,
+    height: 60,
+    borderRadius: 8,
   },
   sidebarText: {
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.categoryChipTextSecondary,
     textAlign: "center",
+    width: "100%",
+    lineHeight: 16,
+    paddingHorizontal: 2,
   },
   sidebarTextSelected: {
     color: COLORS.accentRed,
@@ -284,7 +335,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   contentScrollContent: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingTop: 8,
     paddingBottom: 24,
   },
@@ -330,6 +381,18 @@ const styles = StyleSheet.create({
   chipTextSelected: {
     color: COLORS.white,
     fontWeight: "600",
+  },
+  priceChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.categoryChipBorder,
+    backgroundColor: COLORS.white,
+  },
+  priceChipText: {
+    fontSize: 13,
+    color: COLORS.categoryChipText,
   },
   brandRow: {
     flexDirection: "row",
