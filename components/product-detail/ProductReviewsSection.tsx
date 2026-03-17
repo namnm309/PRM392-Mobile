@@ -1,9 +1,8 @@
 import { COLORS } from '@/constants/theme';
 import type { ReviewResponseDto } from '@/lib/reviewsApi';
-import { formatRelativeTime } from '@/lib/timeUtils';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type ProductReviewsSectionProps = {
   reviews: ReviewResponseDto[];
@@ -31,7 +30,6 @@ export function ProductReviewsSection({
   const summary = useMemo(() => computeSummary(reviews), [reviews]);
   const stars = [5, 4, 3, 2, 1];
   const maxCount = Math.max(...Object.values(summary.distribution), 1);
-  const previewItems = reviews.slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -74,43 +72,6 @@ export function ProductReviewsSection({
         })}
       </View>
 
-      {previewItems.length > 0 && (
-        <View style={styles.previewList}>
-          {previewItems.map((item) => (
-            <View key={item.id} style={styles.previewItem}>
-              <View style={styles.previewHeader}>
-                {item.userAvatarUrl ? (
-                  <Image source={{ uri: item.userAvatarUrl }} style={styles.avatarImage} />
-                ) : (
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {item.userName.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                )}
-                <View style={styles.previewHeaderText}>
-                  <Text style={styles.previewUser}>{item.userName}</Text>
-                  <View style={styles.previewStarsRow}>
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Ionicons
-                        key={i}
-                        name="star"
-                        size={12}
-                        color={i <= item.rating ? '#FFC107' : COLORS.categoryChipBorder}
-                      />
-                    ))}
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.previewContent} numberOfLines={2}>
-                {item.content}
-              </Text>
-              <Text style={styles.previewTime}>{formatRelativeTime(item.createdAt)}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
       <TouchableOpacity
         style={styles.writeButton}
         activeOpacity={0.8}
@@ -138,20 +99,6 @@ const styles = StyleSheet.create({
   barBg: { flex: 1, height: 8, backgroundColor: '#f0f0f0', borderRadius: 4, overflow: 'hidden' },
   barFill: { height: '100%', backgroundColor: COLORS.accentRed },
   distCount: { width: 70, fontSize: 12, color: COLORS.cartTextSecondary },
-  previewList: { marginTop: 16, gap: 12, borderTopWidth: 1, borderTopColor: COLORS.cartBorder, paddingTop: 12 },
-  previewItem: { paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: COLORS.cartBorder },
-  previewHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  avatar: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: '#E8E0F0',
-    alignItems: 'center', justifyContent: 'center', marginRight: 8,
-  },
-  avatarImage: { width: 28, height: 28, borderRadius: 14, marginRight: 8 },
-  avatarText: { fontSize: 12, fontWeight: '600', color: COLORS.cartTextPrimary },
-  previewHeaderText: { flex: 1 },
-  previewUser: { fontSize: 13, fontWeight: '600', color: COLORS.cartTextPrimary },
-  previewStarsRow: { flexDirection: 'row', marginTop: 1 },
-  previewContent: { fontSize: 13, color: COLORS.cartTextPrimary, lineHeight: 18 },
-  previewTime: { fontSize: 11, color: COLORS.cartTextSecondary, marginTop: 2 },
   writeButton: {
     marginTop: 16,
     alignSelf: 'flex-end',

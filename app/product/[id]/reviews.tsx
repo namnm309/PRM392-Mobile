@@ -9,12 +9,15 @@ import { formatRelativeTime } from '@/lib/timeUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Image,
+  Modal,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -25,6 +28,19 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type FilterOption = 'all' | 5 | 4 | 3 | 2 | 1;
+
+const ERROR_TRANSLATIONS: Record<string, string> = {
+  'You can only review products you have successfully received':
+    'Bạn cần mua và nhận sản phẩm thành công để đánh giá',
+  'You have already reviewed this product':
+    'Bạn đã đánh giá sản phẩm này rồi',
+  'User has already reviewed this product':
+    'Bạn đã đánh giá sản phẩm này rồi',
+};
+
+function translateReviewError(message: string): string {
+  return ERROR_TRANSLATIONS[message] ?? message;
+}
 
 function computeSummary(reviews: ReviewResponseDto[]) {
   const total = reviews.length;
@@ -53,8 +69,47 @@ export default function ProductReviewsScreen() {
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [formMessage, setFormMessage] = useState<string | null>(null);
   const [filterStar, setFilterStar] = useState<FilterOption>('all');
+
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
+  const popupScale = useRef(new Animated.Value(0)).current;
+  const popupOpacity = useRef(new Animated.Value(0)).current;
+
+  const showPopup = useCallback((msg: string) => {
+    setPopupMessage(msg);
+    setPopupVisible(true);
+    popupScale.setValue(0.5);
+    popupOpacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(popupScale, {
+        toValue: 1,
+        friction: 5,
+        tension: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(popupOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [popupScale, popupOpacity]);
+
+  const hidePopup = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(popupScale, {
+        toValue: 0.5,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(popupOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setPopupVisible(false));
+  }, [popupScale, popupOpacity]);
 
   const productId = id ?? '';
 
@@ -117,7 +172,6 @@ export default function ProductReviewsScreen() {
     setReviews((prev) => [optimisticReview, ...prev]);
     setRating(0);
     setContent('');
-    setFormMessage(null);
     setSubmitting(true);
 
     try {
@@ -129,7 +183,7 @@ export default function ProductReviewsScreen() {
       setReviews((prev) => prev.filter((r) => r.id !== optimisticReview.id));
       if (e instanceof ApiError) {
         if (e.status === 400) {
-          setFormMessage(e.message);
+          showPopup(translateReviewError(e.message));
         } else if (e.status === 401) {
           router.push({ pathname: '/(auth)/login', params: { redirect: `/product/${productId}/reviews` } });
         } else {
@@ -216,12 +270,6 @@ export default function ProductReviewsScreen() {
           />
           <Text style={styles.inputCounter}>{content.length}/1000</Text>
         </View>
-        {formMessage && (
-          <View style={styles.infoBox}>
-            <Ionicons name="information-circle" size={16} color={COLORS.accentRed} />
-            <Text style={[styles.infoText, { color: COLORS.accentRed }]}>{formMessage}</Text>
-          </View>
-        )}
         <TouchableOpacity
           style={[styles.submitBtn, (!rating || !content.trim() || submitting) && styles.submitBtnDisabled]}
           activeOpacity={0.8}
@@ -364,6 +412,26 @@ export default function ProductReviewsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.headerBlue]} />
         }
       />
+
+      <Modal visible={popupVisible} transparent animationType="none" onRequestClose={hidePopup}>
+        <Pressable style={styles.modalOverlay} onPress={hidePopup}>
+          <Animated.View
+            style={[
+              styles.modalCard,
+              { opacity: popupOpacity, transform: [{ scale: popupScale }] },
+            ]}
+          >
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="alert-circle" size={40} color={COLORS.accentRed} />
+            </View>
+            <Text style={styles.modalTitle}>Không thể đánh giá</Text>
+            <Text style={styles.modalMessage}>{popupMessage}</Text>
+            <TouchableOpacity style={styles.modalBtn} activeOpacity={0.8} onPress={hidePopup}>
+              <Text style={styles.modalBtnText}>Đã hiểu</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -510,4 +578,59 @@ const styles = StyleSheet.create({
   replyTime: { fontSize: 11, color: COLORS.cartTextSecondary },
   replyContent: { fontSize: 13, color: COLORS.cartTextPrimary, lineHeight: 20 },
   emptyText: { fontSize: 13, color: COLORS.cartTextSecondary, marginTop: 8, textAlign: 'center' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  modalCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  modalIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.cartTextPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: COLORS.cartTextSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  modalBtn: {
+    backgroundColor: COLORS.accentRed,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+  },
+  modalBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.white,
+  },
 });

@@ -317,6 +317,18 @@ export default function OrdersScreen() {
                       </Text>
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {order.status === 'Delivered' && (
+                        <TouchableOpacity
+                          style={[styles.cardButton, { borderColor: COLORS.accentRed, backgroundColor: `${COLORS.accentRed}10` }]}
+                          onPress={() => router.push({
+                            pathname: '/product/[id]/reviews',
+                            params: { id: order.orderItems[0]?.productId },
+                          })}
+                        >
+                          <Ionicons name="star-outline" size={16} color={COLORS.accentRed} />
+                          <Text style={[styles.cardButtonText, { color: COLORS.accentRed }]}>Đánh giá</Text>
+                        </TouchableOpacity>
+                      )}
                       {(order.status === 'Confirmed' || order.status === 'Shipping') && order.ghnOrderCode && (
                         <TouchableOpacity
                           style={[styles.cardButton, { borderColor: COLORS.accentRed }]}
