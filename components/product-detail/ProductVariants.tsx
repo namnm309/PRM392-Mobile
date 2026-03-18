@@ -2,7 +2,7 @@ import type { ProductVariant } from '@/constants/productDetailData';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   getColorOptions,
   getConfigOptions,
@@ -236,22 +236,43 @@ export function ProductVariants({
                   disabled={disabled}
                 >
                   <View style={styles.colorChipRow}>
-                    <View
-                      style={[
-                        styles.colorSwatch,
-                        opt.colorHex ? { backgroundColor: opt.colorHex } : styles.colorSwatchFallback,
-                      ]}
-                    />
-                    <Text
-                      style={[
-                        styles.colorChipText,
-                        isSelected && styles.chipTextSelected,
-                        disabled && styles.optionDisabledText,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {opt.colorName}
-                    </Text>
+                    {opt.imageUrl ? (
+                      <Image
+                        source={{ uri: opt.imageUrl }}
+                        style={styles.colorThumb}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View
+                        style={[
+                          styles.colorSwatch,
+                          opt.colorHex
+                            ? { backgroundColor: opt.colorHex }
+                            : styles.colorSwatchFallback,
+                        ]}
+                      />
+                    )}
+                    <View style={styles.colorChipTextWrap}>
+                      <Text
+                        style={[
+                          styles.colorChipText,
+                          isSelected && styles.chipTextSelected,
+                          disabled && styles.optionDisabledText,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {opt.colorName}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.colorChipPrice,
+                          disabled && styles.optionDisabledText,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {formatPrice(opt.priceCurrent)}
+                      </Text>
+                    </View>
                   </View>
                   {isSelected && (
                     <View style={styles.checkmark}>
@@ -331,8 +352,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   colorChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    flexBasis: '48%',
+    flexGrow: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.categoryChipBorder,
@@ -346,7 +369,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingRight: 18,
+    paddingRight: 16,
+  },
+  colorThumb: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.categoryChipBorder,
+    backgroundColor: COLORS.categoryContentBg,
   },
   colorSwatch: {
     width: 16,
@@ -358,10 +389,17 @@ const styles = StyleSheet.create({
   colorSwatchFallback: {
     backgroundColor: COLORS.categoryContentBg,
   },
+  colorChipTextWrap: {
+    flex: 1,
+  },
   colorChipText: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.cartTextPrimary,
-    maxWidth: 160,
+  },
+  colorChipPrice: {
+    fontSize: 11,
+    color: COLORS.cartTextSecondary,
+    marginTop: 2,
   },
   optionDisabled: {
     opacity: 0.45,

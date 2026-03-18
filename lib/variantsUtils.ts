@@ -14,6 +14,9 @@ export type ColorOption = {
   colorHex: string | null;
   displayOrder: number;
   inStock: boolean;
+  imageUrl?: string | null;
+  priceCurrent: number;
+  priceOriginal: number;
 };
 
 export type SelectedConfig = { ramGb: number | null; storageGb: number | null };
@@ -95,6 +98,9 @@ export function getColorOptions(
         colorHex: normHex(v.colorHex),
         displayOrder: v.displayOrder ?? 0,
         inStock,
+        imageUrl: v.imageUrl ?? null,
+        priceCurrent: v.discountPrice ?? v.price,
+        priceOriginal: v.price,
       });
     } else if (inStock) {
       existing.inStock = true;

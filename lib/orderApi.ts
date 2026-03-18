@@ -24,6 +24,7 @@ export interface OrderItemDto {
   updatedAt: string;
   // Variant info (optional, if order item is for a specific variant)
   variantId?: string | null;
+  variantImageUrl?: string | null;
   variantName?: string | null;
   variantColorName?: string | null;
   variantColorHex?: string | null;

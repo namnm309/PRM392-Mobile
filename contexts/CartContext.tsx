@@ -1,21 +1,22 @@
-import type { ProductDetail } from '@/constants/productDetailData';
-import { useAuth } from '@clerk/clerk-expo';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-} from 'react';
+import type { ProductDetail } from "@/constants/productDetailData";
 import {
-  getCart,
-  addCartItem,
-  updateCartItem,
-  removeCartItem,
-  type CartItemDto,
-} from '@/lib/cartApi';
+    addCartItem,
+    getCart,
+    removeCartItem,
+    updateCartItem,
+    type CartItemDto,
+} from "@/lib/cartApi";
+import { fetchProductById } from "@/lib/productsApi";
+import { useAuth } from "@clerk/clerk-expo";
+import React, {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 
 export type CartItem = {
   id: string;
@@ -36,7 +37,10 @@ export type CartItem = {
 type CartContextValue = {
   items: CartItem[];
   addToCart: (
-    product: Pick<ProductDetail, 'id' | 'name' | 'priceCurrent' | 'priceOriginal' | 'imageUri'>,
+    product: Pick<
+      ProductDetail,
+      "id" | "name" | "priceCurrent" | "priceOriginal" | "imageUri"
+    >,
     opts?: { variantId?: string; variantLabel?: string },
   ) => void;
   removeItem: (id: string) => void;
@@ -56,6 +60,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const cartLoadedRef = useRef(false);
+  const variantImageByVariantIdRef = useRef<Map<string, string | null>>(
+    new Map(),
+  );
 
   // Map CartItemDto to CartItem
   const mapCartItemDtoToCartItem = useCallback((dto: CartItemDto): CartItem => {
@@ -64,7 +71,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (dto.variantStorageGb != null) parts.push(`${dto.variantStorageGb}GB`);
     if (dto.variantColorName) parts.push(dto.variantColorName);
     const variantLabel =
-      parts.length > 0 ? parts.join(' · ') : dto.variantName ?? null;
+      parts.length > 0 ? parts.join(" · ") : (dto.variantName ?? null);
 
     return {
       id: dto.id,
@@ -83,39 +90,97 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const enrichVariantImages = useCallback(async (cartItems: CartItem[]) => {
+    const variantIdsToResolve = cartItems
+      .map((i) => i.variantId)
+      .filter((id): id is string => typeof id === "string" && id.length > 0)
+      .filter((id) => !variantImageByVariantIdRef.current.has(id));
+
+    if (variantIdsToResolve.length === 0) {
+      // Still apply cached mappings if any
+      return cartItems.map((i) => {
+        const vid = i.variantId;
+        if (!vid) return i;
+        const cached = variantImageByVariantIdRef.current.get(vid);
+        return cached ? { ...i, imageUri: cached } : i;
+      });
+    }
+
+    const productIds = Array.from(
+      new Set(
+        cartItems
+          .filter((i) => i.variantId)
+          .map((i) => i.productId)
+          .filter(Boolean),
+      ),
+    );
+
+    await Promise.all(
+      productIds.map(async (pid) => {
+        try {
+          const api = await fetchProductById(pid);
+          const variants = api?.variants ?? [];
+          for (const v of variants) {
+            if (!v?.id) continue;
+            if (!variantImageByVariantIdRef.current.has(v.id)) {
+              variantImageByVariantIdRef.current.set(v.id, v.imageUrl ?? null);
+            }
+          }
+        } catch {
+          // Ignore enrichment failures; keep product image
+        }
+      }),
+    );
+
+    // Ensure requested ids are marked (avoid retry loop if not found)
+    for (const vid of variantIdsToResolve) {
+      if (!variantImageByVariantIdRef.current.has(vid)) {
+        variantImageByVariantIdRef.current.set(vid, null);
+      }
+    }
+
+    return cartItems.map((i) => {
+      const vid = i.variantId;
+      if (!vid) return i;
+      const resolved = variantImageByVariantIdRef.current.get(vid);
+      return resolved ? { ...i, imageUri: resolved } : i;
+    });
+  }, []);
+
   // Load cart from backend
   const loadCart = useCallback(async () => {
     if (!isSignedIn || !getToken) return;
-    
+
     try {
       setLoading(true);
       const cart = await getCart(getToken);
       const mappedItems = cart.items.map(mapCartItemDtoToCartItem);
-      
+      const enrichedItems = await enrichVariantImages(mappedItems);
+
       // Preserve selected state from existing items
       setItems((prevItems) => {
         if (prevItems.length === 0) {
           // First load, all items selected by default
-          return mappedItems;
+          return enrichedItems;
         }
-        
+
         // Merge: keep existing selection state
         const prevSelectedMap = new Map(
-          prevItems.map(item => [item.id, item.selected ?? true])
+          prevItems.map((item) => [item.id, item.selected ?? true]),
         );
-        
-        return mappedItems.map(item => ({
+
+        return enrichedItems.map((item) => ({
           ...item,
           selected: prevSelectedMap.get(item.id) ?? true,
         }));
       });
     } catch (error) {
-      console.error('Error loading cart:', error);
+      console.error("Error loading cart:", error);
       // Continue with empty cart if error
     } finally {
       setLoading(false);
     }
-  }, [isSignedIn, getToken, mapCartItemDtoToCartItem]);
+  }, [isSignedIn, getToken, mapCartItemDtoToCartItem, enrichVariantImages]);
 
   // Load cart on mount when user signs in and clear once when signing out
   useEffect(() => {
@@ -133,7 +198,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     async (
       product: Pick<
         ProductDetail,
-        'id' | 'name' | 'priceCurrent' | 'priceOriginal' | 'imageUri'
+        "id" | "name" | "priceCurrent" | "priceOriginal" | "imageUri"
       >,
       opts?: { variantId?: string; variantLabel?: string },
     ) => {
@@ -142,11 +207,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!isSignedIn || !getToken) {
         // If not signed in, just update local state
         setItems((prev) => {
-          const localId = variantId ? `${product.id}::${variantId}` : product.id;
+          const localId = variantId
+            ? `${product.id}::${variantId}`
+            : product.id;
           const existing = prev.find((i) => i.id === localId);
           if (existing) {
             return prev.map((i) =>
-              i.id === localId ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === localId ? { ...i, quantity: i.quantity + 1 } : i,
             );
           }
           return [
@@ -180,7 +247,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
         if (existing) {
           // Update quantity
-          await updateCartItem(getToken, existing.id, { quantity: existing.quantity + 1 });
+          await updateCartItem(getToken, existing.id, {
+            quantity: existing.quantity + 1,
+          });
         } else {
           // Add new item
           await addCartItem(getToken, {
@@ -192,14 +261,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Reload cart to get latest state
         await loadCart();
       } catch (error) {
-        console.error('Error adding to cart:', error);
+        console.error("Error adding to cart:", error);
         // Fallback to local state update
         setItems((prev) => {
-          const localId = variantId ? `${product.id}::${variantId}` : product.id;
+          const localId = variantId
+            ? `${product.id}::${variantId}`
+            : product.id;
           const existing = prev.find((i) => i.id === localId);
           if (existing) {
             return prev.map((i) =>
-              i.id === localId ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === localId ? { ...i, quantity: i.quantity + 1 } : i,
             );
           }
           return [
@@ -223,7 +294,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [isSignedIn, getToken, items, loadCart]
+    [isSignedIn, getToken, items, loadCart],
   );
 
   const removeItem = useCallback(
@@ -240,12 +311,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Reload cart to get latest state
         await loadCart();
       } catch (error) {
-        console.error('Error removing from cart:', error);
+        console.error("Error removing from cart:", error);
         // Fallback to local state update
         setItems((prev) => prev.filter((i) => i.id !== id));
       }
     },
-    [isSignedIn, getToken, loadCart]
+    [isSignedIn, getToken, loadCart],
   );
 
   const updateQuantity = useCallback(
@@ -259,9 +330,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // If not signed in, just update local state
         setItems((prev) => {
           if (quantity <= 0) return prev.filter((i) => i.id !== id);
-          return prev.map((i) =>
-            i.id === id ? { ...i, quantity } : i
-          );
+          return prev.map((i) => (i.id === id ? { ...i, quantity } : i));
         });
         return;
       }
@@ -272,24 +341,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Reload cart to get latest state
         await loadCart();
       } catch (error) {
-        console.error('Error updating cart quantity:', error);
+        console.error("Error updating cart quantity:", error);
         // Fallback to local state update
         setItems((prev) => {
           if (quantity <= 0) return prev.filter((i) => i.id !== id);
-          return prev.map((i) =>
-            i.id === id ? { ...i, quantity } : i
-          );
+          return prev.map((i) => (i.id === id ? { ...i, quantity } : i));
         });
       }
     },
-    [isSignedIn, getToken, loadCart, removeItem]
+    [isSignedIn, getToken, loadCart, removeItem],
   );
 
   const toggleSelect = useCallback((id: string) => {
     setItems((prev) =>
       prev.map((i) =>
-        i.id === id ? { ...i, selected: !(i.selected === true) } : i
-      )
+        i.id === id ? { ...i, selected: !(i.selected === true) } : i,
+      ),
     );
   }, []);
 
@@ -302,13 +369,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       prev.map((i) => ({
         ...i,
         selected: i.productId === productId,
-      }))
+      })),
     );
   }, []);
 
   const selectedIds = useMemo(
     () => new Set(items.filter((i) => i.selected === true).map((i) => i.id)),
-    [items]
+    [items],
   );
 
   const subtotal = useMemo(
@@ -316,7 +383,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       items
         .filter((i) => i.selected === true)
         .reduce((sum, i) => sum + i.priceCurrent * i.quantity, 0),
-    [items]
+    [items],
   );
 
   const value = useMemo<CartContextValue>(
@@ -332,16 +399,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       selectedIds,
       subtotal,
     }),
-    [items, addToCart, removeItem, updateQuantity, toggleSelect, selectAll, selectOnly, loadCart, selectedIds, subtotal]
+    [
+      items,
+      addToCart,
+      removeItem,
+      updateQuantity,
+      toggleSelect,
+      selectAll,
+      selectOnly,
+      loadCart,
+      selectedIds,
+      subtotal,
+    ],
   );
 
-  return (
-    <CartContext.Provider value={value}>{children}</CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within CartProvider');
+  if (!ctx) throw new Error("useCart must be used within CartProvider");
   return ctx;
 }

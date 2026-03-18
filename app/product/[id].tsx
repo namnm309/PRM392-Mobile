@@ -1,42 +1,45 @@
-import { AddToCartToast } from '@/components/AddToCartToast';
+import { AddToCartToast } from "@/components/AddToCartToast";
 
-import { KeyFeaturesSection } from '@/components/product-detail/KeyFeaturesSection';
-import { PaymentOffersSection } from '@/components/product-detail/PaymentOffersSection';
-import { ProductCommitments } from '@/components/product-detail/ProductCommitments';
-import { ProductDetailBottomBar } from '@/components/product-detail/ProductDetailBottomBar';
-import { ProductDetailHeader } from '@/components/product-detail/ProductDetailHeader';
-import { ProductMediaGallery } from '@/components/product-detail/ProductMediaGallery';
-import { ProductReviewsSection } from '@/components/product-detail/ProductReviewsSection';
-import { ProductTitleSection } from '@/components/product-detail/ProductTitleSection';
-import { ProductVariants } from '@/components/product-detail/ProductVariants';
-import { PromotionsSection } from '@/components/product-detail/PromotionsSection';
-import { QASection } from '@/components/product-detail/QASection';
-import { RelatedNewsSection } from '@/components/product-detail/RelatedNewsSection';
-import { RelatedProductsSection } from '@/components/product-detail/RelatedProductsSection';
-import { SaleCountdownBanner } from '@/components/product-detail/SaleCountdownBanner';
+import { KeyFeaturesSection } from "@/components/product-detail/KeyFeaturesSection";
+import { PaymentOffersSection } from "@/components/product-detail/PaymentOffersSection";
+import { ProductCommitments } from "@/components/product-detail/ProductCommitments";
+import { ProductDetailBottomBar } from "@/components/product-detail/ProductDetailBottomBar";
+import { ProductDetailHeader } from "@/components/product-detail/ProductDetailHeader";
+import { ProductMediaGallery } from "@/components/product-detail/ProductMediaGallery";
+import { ProductReviewsSection } from "@/components/product-detail/ProductReviewsSection";
+import { ProductTitleSection } from "@/components/product-detail/ProductTitleSection";
+import { ProductVariants } from "@/components/product-detail/ProductVariants";
+import { PromotionsSection } from "@/components/product-detail/PromotionsSection";
+import { QASection } from "@/components/product-detail/QASection";
+import { RelatedNewsSection } from "@/components/product-detail/RelatedNewsSection";
+import { RelatedProductsSection } from "@/components/product-detail/RelatedProductsSection";
+import { SaleCountdownBanner } from "@/components/product-detail/SaleCountdownBanner";
 
-import { TechSpecsSection } from '@/components/product-detail/TechSpecsSection';
-import { getProductDetail } from '@/constants/productDetailData';
-import type { ProductDetail } from '@/constants/productDetailData';
-import { useCart } from '@/contexts/CartContext';
-import { COLORS } from '@/constants/theme';
+import { TechSpecsSection } from "@/components/product-detail/TechSpecsSection";
+import type { ProductDetail } from "@/constants/productDetailData";
+import { getProductDetail } from "@/constants/productDetailData";
+import { COLORS } from "@/constants/theme";
+import { useCart } from "@/contexts/CartContext";
 import {
-  fetchProductById,
-  mapApiProductToProductDetail,
-} from '@/lib/productsApi';
-import { fetchReviews, type ReviewResponseDto } from '@/lib/reviewsApi';
-import { fetchComments, type ProductCommentResponseDto } from '@/lib/commentsApi';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAuth } from '@clerk/clerk-expo';
-import React, { useEffect, useRef, useState } from 'react';
+    fetchComments,
+    type ProductCommentResponseDto,
+} from "@/lib/commentsApi";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+    fetchProductById,
+    mapApiProductToProductDetail,
+} from "@/lib/productsApi";
+import { fetchReviews, type ReviewResponseDto } from "@/lib/reviewsApi";
+import { useAuth } from "@clerk/clerk-expo";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 
 const BOTTOM_BAR_HEIGHT = 90;
 
@@ -56,14 +59,18 @@ export default function ProductDetailScreen() {
   const [reviews, setReviews] = useState<ReviewResponseDto[]>([]);
   const [comments, setComments] = useState<ProductCommentResponseDto[]>([]);
 
-  const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedVariantId, setSelectedVariantId] = useState<
+    string | undefined
+  >(undefined);
   const [effectivePriceCurrent, setEffectivePriceCurrent] = useState<number>(0);
-  const [effectivePriceOriginal, setEffectivePriceOriginal] = useState<number>(0);
+  const [effectivePriceOriginal, setEffectivePriceOriginal] =
+    useState<number>(0);
   const [effectiveStock, setEffectiveStock] = useState<number>(0);
   const [variantSelectionComplete, setVariantSelectionComplete] =
     useState<boolean>(true);
+  const [selectedVariantImageUri, setSelectedVariantImageUri] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     // Reset variant-related state when product changes
@@ -72,6 +79,7 @@ export default function ProductDetailScreen() {
     setEffectivePriceCurrent(product.priceCurrent);
     setEffectivePriceOriginal(product.priceOriginal);
     setEffectiveStock(product.stock ?? 0);
+    setSelectedVariantImageUri(null);
     const hasVariants =
       (product.hasVariants ?? false) &&
       (product.variants ?? []).some((v) => v.isActive);
@@ -79,9 +87,19 @@ export default function ProductDetailScreen() {
   }, [product]);
 
   useEffect(() => {
-    const productId = id ?? '';
+    if (!product) return;
+    if (!selectedVariantId) {
+      setSelectedVariantImageUri(null);
+      return;
+    }
+    const v = product.variants?.find((x) => x.id === selectedVariantId);
+    setSelectedVariantImageUri(v?.imageUrl ?? null);
+  }, [product, selectedVariantId]);
+
+  useEffect(() => {
+    const productId = id ?? "";
     if (!productId) {
-      setError('Không tìm thấy sản phẩm');
+      setError("Không tìm thấy sản phẩm");
       setLoading(false);
       return;
     }
@@ -97,12 +115,12 @@ export default function ProductDetailScreen() {
           setProduct(mapApiProductToProductDetail(apiProduct));
         } else {
           setProduct(null);
-          setError('Không tìm thấy sản phẩm');
+          setError("Không tìm thấy sản phẩm");
         }
       })
       .catch((err) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Không thể tải sản phẩm');
+        setError(err instanceof Error ? err.message : "Không thể tải sản phẩm");
         try {
           const fallback = getProductDetail(productId);
           setProduct(fallback);
@@ -112,12 +130,20 @@ export default function ProductDetailScreen() {
       });
 
     const loadReviews = fetchReviews(productId)
-      .then((data) => { if (!cancelled) setReviews(data); })
-      .catch(() => { if (!cancelled) setReviews([]); });
+      .then((data) => {
+        if (!cancelled) setReviews(data);
+      })
+      .catch(() => {
+        if (!cancelled) setReviews([]);
+      });
 
     const loadComments = fetchComments(productId)
-      .then((data) => { if (!cancelled) setComments(data); })
-      .catch(() => { if (!cancelled) setComments([]); });
+      .then((data) => {
+        if (!cancelled) setComments(data);
+      })
+      .catch(() => {
+        if (!cancelled) setComments([]);
+      });
 
     Promise.all([loadProduct, loadReviews, loadComments]).finally(() => {
       if (!cancelled) setLoading(false);
@@ -134,13 +160,15 @@ export default function ProductDetailScreen() {
       clearTimeout(toastTimeoutRef.current);
       toastTimeoutRef.current = null;
     }
-    router.replace('/(tabs)/cart');
+    router.replace("/(tabs)/cart");
   };
 
   const handleAddToCart = () => {
     if (!product) return;
     const currentStock =
-      (product.hasVariants && selectedVariantId ? effectiveStock : (product.stock ?? 0)) ?? 0;
+      (product.hasVariants && selectedVariantId
+        ? effectiveStock
+        : (product.stock ?? 0)) ?? 0;
     if (currentStock <= 0) {
       return;
     }
@@ -152,11 +180,13 @@ export default function ProductDetailScreen() {
       selectedVariant &&
       [
         selectedVariant.ramGb != null ? `${selectedVariant.ramGb}GB` : null,
-        selectedVariant.storageGb != null ? `${selectedVariant.storageGb}GB` : null,
+        selectedVariant.storageGb != null
+          ? `${selectedVariant.storageGb}GB`
+          : null,
         selectedVariant.colorName ?? null,
       ]
         .filter(Boolean)
-        .join(' · ');
+        .join(" · ");
 
     addToCart(
       {
@@ -170,7 +200,10 @@ export default function ProductDetailScreen() {
           product.hasVariants && selectedVariantId
             ? effectivePriceOriginal
             : product.priceOriginal,
-        imageUri: product.imageUri,
+        imageUri:
+          (product.hasVariants && selectedVariantId
+            ? selectedVariantImageUri
+            : null) ?? product.imageUri,
       },
       { variantId: selectedVariantId, variantLabel },
     );
@@ -182,34 +215,42 @@ export default function ProductDetailScreen() {
   const handleBuyNow = async () => {
     if (!product) return;
     const currentStock =
-      (product.hasVariants && selectedVariantId ? effectiveStock : (product.stock ?? 0)) ?? 0;
+      (product.hasVariants && selectedVariantId
+        ? effectiveStock
+        : (product.stock ?? 0)) ?? 0;
     if (currentStock <= 0) {
       return;
     }
-    await addToCart({
-      id: product.id,
-      name: product.name,
-      priceCurrent:
-        product.hasVariants && selectedVariantId
-          ? effectivePriceCurrent
-          : product.priceCurrent,
-      priceOriginal:
-        product.hasVariants && selectedVariantId
-          ? effectivePriceOriginal
-          : product.priceOriginal,
-      imageUri: product.imageUri,
-    }, { variantId: selectedVariantId });
+    await addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        priceCurrent:
+          product.hasVariants && selectedVariantId
+            ? effectivePriceCurrent
+            : product.priceCurrent,
+        priceOriginal:
+          product.hasVariants && selectedVariantId
+            ? effectivePriceOriginal
+            : product.priceOriginal,
+        imageUri:
+          (product.hasVariants && selectedVariantId
+            ? selectedVariantImageUri
+            : null) ?? product.imageUri,
+      },
+      { variantId: selectedVariantId },
+    );
     selectOnly(product.id);
 
     if (!isSignedIn) {
       router.push({
-        pathname: '/(auth)/login',
-        params: { redirect: '/checkout' },
+        pathname: "/(auth)/login",
+        params: { redirect: "/checkout" },
       });
       return;
     }
 
-    router.push('/checkout');
+    router.push("/checkout");
   };
 
   useEffect(() => {
@@ -231,7 +272,7 @@ export default function ProductDetailScreen() {
       <View style={[styles.screen, styles.centered]}>
         <ProductDetailHeader />
         <Text style={styles.errorText}>
-          {error ?? 'Không tìm thấy sản phẩm'}
+          {error ?? "Không tìm thấy sản phẩm"}
         </Text>
       </View>
     );
@@ -245,10 +286,20 @@ export default function ProductDetailScreen() {
   const avgRating =
     reviews.length > 0
       ? Math.round(
-          (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length) *
+          (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) /
+            reviews.length) *
             10,
         ) / 10
       : undefined;
+
+  const displayedMedia = useMemo(() => {
+    if (!selectedVariantImageUri) return product.media;
+    const rest = (product.media ?? []).filter(
+      (m) =>
+        !(m.type === "image" && m.uri && m.uri === selectedVariantImageUri),
+    );
+    return [{ type: "image" as const, uri: selectedVariantImageUri }, ...rest];
+  }, [product.media, selectedVariantImageUri]);
 
   return (
     <View style={styles.screen}>
@@ -259,7 +310,7 @@ export default function ProductDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ProductMediaGallery
-          media={product.media}
+          media={displayedMedia}
           productName={product.name}
           brand={product.brand}
         />
@@ -278,8 +329,10 @@ export default function ProductDetailScreen() {
           tradeInPrice={product.tradeInPrice}
           onVariantChange={(sel) => {
             setSelectedVariantId(sel.variantId);
-            if (sel.priceCurrent > 0) setEffectivePriceCurrent(sel.priceCurrent);
-            if (sel.priceOriginal > 0) setEffectivePriceOriginal(sel.priceOriginal);
+            if (sel.priceCurrent > 0)
+              setEffectivePriceCurrent(sel.priceCurrent);
+            if (sel.priceOriginal > 0)
+              setEffectivePriceOriginal(sel.priceOriginal);
             setEffectiveStock(sel.stock);
             setVariantSelectionComplete(sel.isComplete);
             if (hasRealVariants && !sel.isComplete) {
@@ -300,13 +353,13 @@ export default function ProductDetailScreen() {
           reviews={reviews}
           onSeeAll={() =>
             router.push({
-              pathname: '/product/[id]/reviews',
+              pathname: "/product/[id]/reviews",
               params: { id: product.id },
             })
           }
           onWriteReview={() =>
             router.push({
-              pathname: '/product/[id]/reviews',
+              pathname: "/product/[id]/reviews",
               params: { id: product.id },
             })
           }
@@ -320,43 +373,52 @@ export default function ProductDetailScreen() {
           comments={comments}
           onAsk={() =>
             router.push({
-              pathname: '/product/[id]/qa',
+              pathname: "/product/[id]/qa",
               params: { id: product.id },
             })
           }
           onSeeAll={() =>
             router.push({
-              pathname: '/product/[id]/qa',
+              pathname: "/product/[id]/qa",
               params: { id: product.id },
             })
           }
           onReply={(commentId) =>
             router.push({
-              pathname: '/product/[id]/qa',
+              pathname: "/product/[id]/qa",
               params: { id: product.id, focusQuestionId: commentId },
             })
           }
         />
         <View style={{ height: BOTTOM_BAR_HEIGHT }} />
       </ScrollView>
-      <AddToCartToast
-        visible={showAddToCartToast}
-        onDismiss={goToCart}
-      />
+      <AddToCartToast visible={showAddToCartToast} onDismiss={goToCart} />
       <View style={styles.bottomBar}>
         <ProductDetailBottomBar
-          priceCurrent={hasRealVariants ? effectivePriceCurrent : product.priceCurrent}
-          priceOriginal={hasRealVariants ? effectivePriceOriginal : product.priceOriginal}
+          priceCurrent={
+            hasRealVariants ? effectivePriceCurrent : product.priceCurrent
+          }
+          priceOriginal={
+            hasRealVariants ? effectivePriceOriginal : product.priceOriginal
+          }
           inStock={hasRealVariants ? effectiveStock > 0 : inStock}
           disabled={hasRealVariants ? !variantSelectionComplete : false}
           onAddToCart={
             hasRealVariants && !variantSelectionComplete
-              ? () => Alert.alert('Chọn phiên bản', 'Vui lòng chọn cấu hình và màu sắc.')
+              ? () =>
+                  Alert.alert(
+                    "Chọn phiên bản",
+                    "Vui lòng chọn cấu hình và màu sắc.",
+                  )
               : handleAddToCart
           }
           onBuyNow={
             hasRealVariants && !variantSelectionComplete
-              ? () => Alert.alert('Chọn phiên bản', 'Vui lòng chọn cấu hình và màu sắc.')
+              ? () =>
+                  Alert.alert(
+                    "Chọn phiên bản",
+                    "Vui lòng chọn cấu hình và màu sắc.",
+                  )
               : handleBuyNow
           }
         />
@@ -371,8 +433,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   scroll: {
     flex: 1,
@@ -381,7 +443,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   bottomBar: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,

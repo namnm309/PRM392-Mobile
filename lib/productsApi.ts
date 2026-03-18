@@ -34,6 +34,7 @@ export type ApiProductVariant = {
   variantName?: string | null;
   colorName: string;
   colorHex?: string | null;
+  imageUrl?: string | null;
   ramGb?: number | null;
   storageGb?: number | null;
   price: number;
