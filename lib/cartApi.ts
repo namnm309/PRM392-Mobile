@@ -4,6 +4,12 @@ import { API_BASE_URL } from '@/constants/api';
 export interface CartItemDto {
   id: string;
   productId: string;
+  variantId?: string | null;
+  variantName?: string | null;
+  variantColorName?: string | null;
+  variantColorHex?: string | null;
+  variantRamGb?: number | null;
+  variantStorageGb?: number | null;
   productName: string;
   productPrice: number;
   productDiscountPrice?: number | null;
@@ -24,6 +30,7 @@ export interface CartResponseDto {
 
 export interface AddCartItemRequest {
   productId: string;
+  variantId?: string;
   quantity: number;
 }
 

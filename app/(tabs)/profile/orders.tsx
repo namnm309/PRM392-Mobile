@@ -280,28 +280,64 @@ export default function OrdersScreen() {
                   </View>
 
                   <View style={styles.cardBody}>
-                    {order.orderItems.slice(0, 2).map((item, index) => (
-                      <View key={item.id} style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        paddingVertical: 8,
-                        borderTopWidth: index > 0 ? 1 : 0,
-                        borderTopColor: '#F3F4F6',
-                      }}>
-                        <Image
-                          source={{ uri: item.product?.imageUrl || 'https://via.placeholder.com/60' }}
-                          style={{ width: 50, height: 50, borderRadius: 8, marginRight: 12 }}
-                        />
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 14, color: COLORS.background }} numberOfLines={1}>
-                            {item.product?.name || 'Sản phẩm'}
-                          </Text>
-                          <Text style={{ fontSize: 13, color: COLORS.grey }}>
-                            x{item.quantity} • {formatPrice(item.unitPrice)}
-                          </Text>
+                    {order.orderItems.slice(0, 2).map((item, index) => {
+                      const hasVariantInfo =
+                        item.variantRamGb != null ||
+                        item.variantStorageGb != null ||
+                        !!item.variantColorName;
+
+                      const variantParts: string[] = [];
+                      if (item.variantRamGb != null) {
+                        variantParts.push(`${item.variantRamGb}GB`);
+                      }
+                      if (item.variantStorageGb != null) {
+                        variantParts.push(`${item.variantStorageGb}GB`);
+                      }
+                      if (item.variantColorName) {
+                        variantParts.push(item.variantColorName);
+                      }
+                      const variantLabel = hasVariantInfo ? variantParts.join(' · ') : null;
+
+                      return (
+                        <View
+                          key={item.id}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingVertical: 8,
+                            borderTopWidth: index > 0 ? 1 : 0,
+                            borderTopColor: '#F3F4F6',
+                          }}
+                        >
+                          <Image
+                            source={{
+                              uri: item.product?.imageUrl || 'https://via.placeholder.com/60',
+                            }}
+                            style={{ width: 50, height: 50, borderRadius: 8, marginRight: 12 }}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{ fontSize: 14, color: COLORS.background }}
+                              numberOfLines={1}
+                            >
+                              {item.product?.name || 'Sản phẩm'}
+                            </Text>
+                            {variantLabel && (
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  color: COLORS.grey,
+                                  marginTop: 2,
+                                }}
+                                numberOfLines={1}
+                              >
+                                {variantLabel}
+                              </Text>
+                            )}
+                          </View>
                         </View>
-                      </View>
-                    ))}
+                      );
+                    })}
                     {order.orderItems.length > 2 && (
                       <Text style={{ fontSize: 13, color: COLORS.grey, fontStyle: 'italic' }}>
                         +{order.orderItems.length - 2} sản phẩm khác

@@ -31,6 +31,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -54,6 +55,28 @@ export default function ProductDetailScreen() {
 
   const [reviews, setReviews] = useState<ReviewResponseDto[]>([]);
   const [comments, setComments] = useState<ProductCommentResponseDto[]>([]);
+
+  const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(
+    undefined,
+  );
+  const [effectivePriceCurrent, setEffectivePriceCurrent] = useState<number>(0);
+  const [effectivePriceOriginal, setEffectivePriceOriginal] = useState<number>(0);
+  const [effectiveStock, setEffectiveStock] = useState<number>(0);
+  const [variantSelectionComplete, setVariantSelectionComplete] =
+    useState<boolean>(true);
+
+  useEffect(() => {
+    // Reset variant-related state when product changes
+    if (!product) return;
+    setSelectedVariantId(undefined);
+    setEffectivePriceCurrent(product.priceCurrent);
+    setEffectivePriceOriginal(product.priceOriginal);
+    setEffectiveStock(product.stock ?? 0);
+    const hasVariants =
+      (product.hasVariants ?? false) &&
+      (product.variants ?? []).some((v) => v.isActive);
+    setVariantSelectionComplete(!hasVariants);
+  }, [product]);
 
   useEffect(() => {
     const productId = id ?? '';
@@ -116,16 +139,41 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    if ((product.stock ?? 0) <= 0) {
+    const currentStock =
+      (product.hasVariants && selectedVariantId ? effectiveStock : (product.stock ?? 0)) ?? 0;
+    if (currentStock <= 0) {
       return;
     }
-    addToCart({
-      id: product.id,
-      name: product.name,
-      priceCurrent: product.priceCurrent,
-      priceOriginal: product.priceOriginal,
-      imageUri: product.imageUri,
-    });
+    const selectedVariant =
+      selectedVariantId && product.variants
+        ? product.variants.find((v) => v.id === selectedVariantId)
+        : undefined;
+    const variantLabel =
+      selectedVariant &&
+      [
+        selectedVariant.ramGb != null ? `${selectedVariant.ramGb}GB` : null,
+        selectedVariant.storageGb != null ? `${selectedVariant.storageGb}GB` : null,
+        selectedVariant.colorName ?? null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+    addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        priceCurrent:
+          product.hasVariants && selectedVariantId
+            ? effectivePriceCurrent
+            : product.priceCurrent,
+        priceOriginal:
+          product.hasVariants && selectedVariantId
+            ? effectivePriceOriginal
+            : product.priceOriginal,
+        imageUri: product.imageUri,
+      },
+      { variantId: selectedVariantId, variantLabel },
+    );
     setShowAddToCartToast(true);
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     toastTimeoutRef.current = setTimeout(goToCart, TOAST_DURATION_MS);
@@ -133,16 +181,24 @@ export default function ProductDetailScreen() {
 
   const handleBuyNow = async () => {
     if (!product) return;
-    if ((product.stock ?? 0) <= 0) {
+    const currentStock =
+      (product.hasVariants && selectedVariantId ? effectiveStock : (product.stock ?? 0)) ?? 0;
+    if (currentStock <= 0) {
       return;
     }
     await addToCart({
       id: product.id,
       name: product.name,
-      priceCurrent: product.priceCurrent,
-      priceOriginal: product.priceOriginal,
+      priceCurrent:
+        product.hasVariants && selectedVariantId
+          ? effectivePriceCurrent
+          : product.priceCurrent,
+      priceOriginal:
+        product.hasVariants && selectedVariantId
+          ? effectivePriceOriginal
+          : product.priceOriginal,
       imageUri: product.imageUri,
-    });
+    }, { variantId: selectedVariantId });
     selectOnly(product.id);
 
     if (!isSignedIn) {
@@ -183,6 +239,9 @@ export default function ProductDetailScreen() {
 
   const stock = product.stock ?? 0;
   const inStock = stock > 0;
+  const hasRealVariants =
+    (product.hasVariants ?? false) &&
+    (product.variants ?? []).some((v) => v.isActive);
   const avgRating =
     reviews.length > 0
       ? Math.round(
@@ -214,9 +273,19 @@ export default function ProductDetailScreen() {
           <SaleCountdownBanner countdown={product.saleEndCountdown} />
         )}
         <ProductVariants
-          storageOptions={product.storageOptions}
-          colorOptions={product.colorOptions}
+          hasVariants={product.hasVariants}
+          variants={product.variants}
           tradeInPrice={product.tradeInPrice}
+          onVariantChange={(sel) => {
+            setSelectedVariantId(sel.variantId);
+            if (sel.priceCurrent > 0) setEffectivePriceCurrent(sel.priceCurrent);
+            if (sel.priceOriginal > 0) setEffectivePriceOriginal(sel.priceOriginal);
+            setEffectiveStock(sel.stock);
+            setVariantSelectionComplete(sel.isComplete);
+            if (hasRealVariants && !sel.isComplete) {
+              // user will see inline message in options; keep screen quiet
+            }
+          }}
         />
 
         <PromotionsSection />
@@ -276,11 +345,20 @@ export default function ProductDetailScreen() {
       />
       <View style={styles.bottomBar}>
         <ProductDetailBottomBar
-          priceCurrent={product.priceCurrent}
-          priceOriginal={product.priceOriginal}
-          inStock={inStock}
-          onAddToCart={handleAddToCart}
-          onBuyNow={handleBuyNow}
+          priceCurrent={hasRealVariants ? effectivePriceCurrent : product.priceCurrent}
+          priceOriginal={hasRealVariants ? effectivePriceOriginal : product.priceOriginal}
+          inStock={hasRealVariants ? effectiveStock > 0 : inStock}
+          disabled={hasRealVariants ? !variantSelectionComplete : false}
+          onAddToCart={
+            hasRealVariants && !variantSelectionComplete
+              ? () => Alert.alert('Chọn phiên bản', 'Vui lòng chọn cấu hình và màu sắc.')
+              : handleAddToCart
+          }
+          onBuyNow={
+            hasRealVariants && !variantSelectionComplete
+              ? () => Alert.alert('Chọn phiên bản', 'Vui lòng chọn cấu hình và màu sắc.')
+              : handleBuyNow
+          }
         />
       </View>
     </View>

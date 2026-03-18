@@ -20,6 +20,8 @@ import {
 export type CartItem = {
   id: string;
   productId: string;
+  variantId?: string | null;
+  variantLabel?: string | null;
   name: string;
   priceCurrent: number;
   priceOriginal: number;
@@ -33,7 +35,10 @@ export type CartItem = {
 
 type CartContextValue = {
   items: CartItem[];
-  addToCart: (product: Pick<ProductDetail, 'id' | 'name' | 'priceCurrent' | 'priceOriginal' | 'imageUri'>) => void;
+  addToCart: (
+    product: Pick<ProductDetail, 'id' | 'name' | 'priceCurrent' | 'priceOriginal' | 'imageUri'>,
+    opts?: { variantId?: string; variantLabel?: string },
+  ) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   toggleSelect: (id: string) => void;
@@ -54,9 +59,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Map CartItemDto to CartItem
   const mapCartItemDtoToCartItem = useCallback((dto: CartItemDto): CartItem => {
+    const parts: string[] = [];
+    if (dto.variantRamGb != null) parts.push(`${dto.variantRamGb}GB`);
+    if (dto.variantStorageGb != null) parts.push(`${dto.variantStorageGb}GB`);
+    if (dto.variantColorName) parts.push(dto.variantColorName);
+    const variantLabel =
+      parts.length > 0 ? parts.join(' · ') : dto.variantName ?? null;
+
     return {
       id: dto.id,
       productId: dto.productId,
+      variantId: dto.variantId ?? null,
+      variantLabel,
       name: dto.productName,
       priceCurrent: dto.productDiscountPrice ?? dto.productPrice,
       priceOriginal: dto.productPrice,
@@ -116,21 +130,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [isSignedIn, loadCart]);
 
   const addToCart = useCallback(
-    async (product: Pick<ProductDetail, 'id' | 'name' | 'priceCurrent' | 'priceOriginal' | 'imageUri'>) => {
+    async (
+      product: Pick<
+        ProductDetail,
+        'id' | 'name' | 'priceCurrent' | 'priceOriginal' | 'imageUri'
+      >,
+      opts?: { variantId?: string; variantLabel?: string },
+    ) => {
+      const variantId = opts?.variantId;
+      const variantLabel = opts?.variantLabel ?? null;
       if (!isSignedIn || !getToken) {
         // If not signed in, just update local state
         setItems((prev) => {
-          const existing = prev.find((i) => i.id === product.id);
+          const localId = variantId ? `${product.id}::${variantId}` : product.id;
+          const existing = prev.find((i) => i.id === localId);
           if (existing) {
             return prev.map((i) =>
-              i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === localId ? { ...i, quantity: i.quantity + 1 } : i
             );
           }
           return [
             ...prev,
             {
-              id: product.id,
+              id: localId,
               productId: product.id,
+              variantId: variantId ?? null,
+              variantLabel,
               name: product.name,
               priceCurrent: product.priceCurrent,
               priceOriginal: product.priceOriginal,
@@ -148,7 +173,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       try {
         // Sync with backend
-        const existing = items.find((i) => i.id === product.id);
+        const existing = items.find(
+          (i) =>
+            i.productId === product.id &&
+            (variantId ? i.variantId === variantId : true),
+        );
         if (existing) {
           // Update quantity
           await updateCartItem(getToken, existing.id, { quantity: existing.quantity + 1 });
@@ -156,6 +185,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           // Add new item
           await addCartItem(getToken, {
             productId: product.id,
+            ...(variantId ? { variantId } : {}),
             quantity: 1,
           });
         }
@@ -165,17 +195,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.error('Error adding to cart:', error);
         // Fallback to local state update
         setItems((prev) => {
-          const existing = prev.find((i) => i.id === product.id);
+          const localId = variantId ? `${product.id}::${variantId}` : product.id;
+          const existing = prev.find((i) => i.id === localId);
           if (existing) {
             return prev.map((i) =>
-              i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === localId ? { ...i, quantity: i.quantity + 1 } : i
             );
           }
           return [
             ...prev,
             {
-              id: product.id,
+              id: localId,
               productId: product.id,
+              variantId: variantId ?? null,
+              variantLabel,
               name: product.name,
               priceCurrent: product.priceCurrent,
               priceOriginal: product.priceOriginal,

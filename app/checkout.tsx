@@ -726,6 +726,11 @@ export default function CheckoutScreen() {
                 <Text style={styles.orderItemName} numberOfLines={2}>
                   {item.name}
                 </Text>
+                {item.variantLabel ? (
+                  <Text style={styles.orderItemVariant} numberOfLines={1}>
+                    {item.variantLabel}
+                  </Text>
+                ) : null}
                 <Text style={styles.orderItemQuantityText}>
                   Số lượng: {item.quantity}
                 </Text>
@@ -1353,6 +1358,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderItemName: { fontSize: 13, color: COLORS.cartTextPrimary },
+  orderItemVariant: {
+    marginTop: 2,
+    fontSize: 12,
+    color: COLORS.grey,
+  },
   orderItemQuantityText: {
     marginTop: 2,
     fontSize: 12,
