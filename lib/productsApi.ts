@@ -3,6 +3,7 @@ import type {
   ProductDetail,
   ProductMediaItem,
   ProductSpec,
+  ProductVariant,
   StoreBranch,
 } from '@/constants/productDetailData';
 import { API_BASE_URL } from '@/constants/api';
@@ -26,10 +27,29 @@ export type ApiProductImage = {
   imageUrl?: string;
 };
 
+export type ApiProductVariant = {
+  id: string;
+  productId: string;
+  sku?: string | null;
+  variantName?: string | null;
+  colorName: string;
+  colorHex?: string | null;
+  imageUrl?: string | null;
+  ramGb?: number | null;
+  storageGb?: number | null;
+  price: number;
+  discountPrice?: number | null;
+  stock: number;
+  isActive: boolean;
+  displayOrder: number;
+};
+
 export type ApiProductDetail = ApiProduct & {
   stock?: number;
   productImages?: ApiProductImage[];
   category?: { id: string; name: string } | null;
+  hasVariants?: boolean;
+  variants?: ApiProductVariant[];
 };
 
 type ApiResponse<T> = {
@@ -145,6 +165,8 @@ export function mapApiProductToProductDetail(
     imageUri: api.imageUrl ?? null,
     badgeSecondary: api.isOnSale ? null : 'Trả góp 0%',
     stock: api.stock ?? 0,
+    hasVariants: api.hasVariants ?? false,
+    variants: (api.variants ?? []) as unknown as ProductVariant[],
     categoryId: api.categoryId ?? api.category?.id ?? null,
     categoryName: api.category?.name ?? null,
     media,

@@ -62,6 +62,11 @@ function CartItemRow({
         <Text style={cartStyles.itemName} numberOfLines={2}>
           {item.name}
         </Text>
+        {item.variantLabel ? (
+          <Text style={cartStyles.itemVariantLabel} numberOfLines={1}>
+            {item.variantLabel}
+          </Text>
+        ) : null}
         <Text style={cartStyles.itemPriceCurrent}>
           {formatPrice(item.priceCurrent)}
         </Text>

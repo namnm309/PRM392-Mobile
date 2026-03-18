@@ -63,7 +63,7 @@ export function PromotionsSection() {
         </View>
         <View style={styles.saleBanner}>
           <Text style={styles.saleBannerText}>
-            Sale TẾT "ANt" từ ngày 04.02 - 25.02
+            Sale TẾT &quot;ANt&quot; từ ngày 04.02 - 25.02
           </Text>
         </View>
       </View>

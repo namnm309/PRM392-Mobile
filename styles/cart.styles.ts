@@ -60,6 +60,11 @@ export const cartStyles = StyleSheet.create({
     color: COLORS.cartTextPrimary,
     marginBottom: 4,
   },
+  itemVariantLabel: {
+    fontSize: 12,
+    color: COLORS.cartTextSecondary,
+    marginBottom: 2,
+  },
   itemPriceCurrent: {
     fontSize: 15,
     fontWeight: '700',

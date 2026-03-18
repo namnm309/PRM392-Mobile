@@ -59,6 +59,23 @@ export type ProductReviewItem = {
   createdAt: string;
 };
 
+export type ProductVariant = {
+  id: string;
+  productId: string;
+  sku?: string | null;
+  variantName?: string | null;
+  colorName: string;
+  colorHex?: string | null;
+  imageUrl?: string | null;
+  ramGb?: number | null;
+  storageGb?: number | null;
+  price: number;
+  discountPrice?: number | null;
+  stock: number;
+  isActive: boolean;
+  displayOrder: number;
+};
+
 export type ProductDetail = HomeProduct & {
   media: ProductMediaItem[];
   storageOptions?: StorageOption[];
@@ -80,6 +97,8 @@ export type ProductDetail = HomeProduct & {
   storeBranches: StoreBranch[];
   saleEndCountdown?: { days: number; hours: number; mins: number; secs: number };
   stock?: number;
+  hasVariants?: boolean;
+  variants?: ProductVariant[];
 };
 
 const DEFAULT_DETAIL: Omit<ProductDetail, keyof HomeProduct> = {

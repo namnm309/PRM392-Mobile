@@ -20,9 +20,11 @@ import {
   getMyOrders,
   cancelOrder,
   OrderDto,
+  OrderItemDto,
   getStatusColor,
   getStatusText,
 } from '@/lib/orderApi';
+import { fetchProductById } from '@/lib/productsApi';
 import { AdaptiveHeader } from '@/components/AdaptiveHeader';
 import { TabScreenWrapper } from '@/components/TabScreenWrapper';
 import { useTabBarBottomPadding } from '@/hooks/useTabBarBottomPadding';
@@ -38,6 +40,52 @@ export default function OrdersScreen() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const ordersLoadedRef = useRef(false);
+  const variantImageByVariantIdRef = useRef<Map<string, string | null>>(new Map());
+  const [variantImageTick, setVariantImageTick] = useState(0);
+
+  const enrichOrderVariantImages = useCallback(async (incoming: OrderDto[]) => {
+    const items = incoming.flatMap((o) => o.orderItems ?? []);
+    const needsResolve = items
+      .map((i) => i.variantId)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      .filter((id) => !variantImageByVariantIdRef.current.has(id));
+
+    if (needsResolve.length === 0) return;
+
+    const productIds = Array.from(
+      new Set(
+        items
+          .filter((i) => i.variantId)
+          .map((i) => i.productId)
+          .filter(Boolean),
+      ),
+    );
+
+    await Promise.all(
+      productIds.map(async (pid) => {
+        try {
+          const api = await fetchProductById(pid);
+          const variants = api?.variants ?? [];
+          for (const v of variants) {
+            if (!v?.id) continue;
+            if (!variantImageByVariantIdRef.current.has(v.id)) {
+              variantImageByVariantIdRef.current.set(v.id, v.imageUrl ?? null);
+            }
+          }
+        } catch {
+          // Ignore enrichment failures; keep product image
+        }
+      }),
+    );
+
+    for (const vid of needsResolve) {
+      if (!variantImageByVariantIdRef.current.has(vid)) {
+        variantImageByVariantIdRef.current.set(vid, null);
+      }
+    }
+
+    setVariantImageTick((x) => x + 1);
+  }, []);
 
   const fetchOrders = useCallback(async (pageNum: number = 1, refresh: boolean = false) => {
     try {
@@ -50,13 +98,15 @@ export default function OrdersScreen() {
       }
       setHasMore(data.hasNextPage);
       setPage(pageNum);
+      // Enrich variant images in background (doesn't block UI)
+      enrichOrderVariantImages(data.items).catch(() => null);
     } catch (err: any) {
       setError(err.message || 'Không thể tải lịch sử đơn hàng');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getToken]);
+  }, [getToken, enrichOrderVariantImages]);
 
   // Load orders on mount (only once)
   useEffect(() => {
@@ -77,6 +127,7 @@ export default function OrdersScreen() {
         setOrders(data.items);
         setHasMore(data.hasNextPage);
         setPage(1);
+        enrichOrderVariantImages(data.items).catch(() => null);
 
         // Auto-sync GHN status for shipping orders in background
         const shippingOrders = data.items.filter(
@@ -205,6 +256,15 @@ export default function OrdersScreen() {
     return price.toLocaleString('vi-VN') + 'đ';
   };
 
+  const resolveOrderItemImageUri = (item: OrderItemDto) => {
+    // touch state so screen rerenders when cache updates
+    void variantImageTick;
+    if (item.variantImageUrl) return item.variantImageUrl;
+    const vid = item.variantId ?? null;
+    const cached = vid ? variantImageByVariantIdRef.current.get(vid) : null;
+    return cached || item.product?.imageUrl || 'https://via.placeholder.com/60';
+  };
+
   if (loading) {
     return (
       <TabScreenWrapper>
@@ -280,28 +340,64 @@ export default function OrdersScreen() {
                   </View>
 
                   <View style={styles.cardBody}>
-                    {order.orderItems.slice(0, 2).map((item, index) => (
-                      <View key={item.id} style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        paddingVertical: 8,
-                        borderTopWidth: index > 0 ? 1 : 0,
-                        borderTopColor: '#F3F4F6',
-                      }}>
-                        <Image
-                          source={{ uri: item.product?.imageUrl || 'https://via.placeholder.com/60' }}
-                          style={{ width: 50, height: 50, borderRadius: 8, marginRight: 12 }}
-                        />
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 14, color: COLORS.background }} numberOfLines={1}>
-                            {item.product?.name || 'Sản phẩm'}
-                          </Text>
-                          <Text style={{ fontSize: 13, color: COLORS.grey }}>
-                            x{item.quantity} • {formatPrice(item.unitPrice)}
-                          </Text>
+                    {order.orderItems.slice(0, 2).map((item, index) => {
+                      const hasVariantInfo =
+                        item.variantRamGb != null ||
+                        item.variantStorageGb != null ||
+                        !!item.variantColorName;
+
+                      const variantParts: string[] = [];
+                      if (item.variantRamGb != null) {
+                        variantParts.push(`${item.variantRamGb}GB`);
+                      }
+                      if (item.variantStorageGb != null) {
+                        variantParts.push(`${item.variantStorageGb}GB`);
+                      }
+                      if (item.variantColorName) {
+                        variantParts.push(item.variantColorName);
+                      }
+                      const variantLabel = hasVariantInfo ? variantParts.join(' · ') : null;
+
+                      return (
+                        <View
+                          key={item.id}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingVertical: 8,
+                            borderTopWidth: index > 0 ? 1 : 0,
+                            borderTopColor: '#F3F4F6',
+                          }}
+                        >
+                          <Image
+                            source={{
+                              uri: resolveOrderItemImageUri(item),
+                            }}
+                            style={{ width: 50, height: 50, borderRadius: 8, marginRight: 12 }}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{ fontSize: 14, color: COLORS.background }}
+                              numberOfLines={1}
+                            >
+                              {item.product?.name || 'Sản phẩm'}
+                            </Text>
+                            {variantLabel && (
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  color: COLORS.grey,
+                                  marginTop: 2,
+                                }}
+                                numberOfLines={1}
+                              >
+                                {variantLabel}
+                              </Text>
+                            )}
+                          </View>
                         </View>
-                      </View>
-                    ))}
+                      );
+                    })}
                     {order.orderItems.length > 2 && (
                       <Text style={{ fontSize: 13, color: COLORS.grey, fontStyle: 'italic' }}>
                         +{order.orderItems.length - 2} sản phẩm khác

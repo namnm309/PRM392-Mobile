@@ -19,6 +19,7 @@ type ProductDetailBottomBarProps = {
   onAddToCart?: () => void;
   onBuyNow?: () => void;
   inStock?: boolean;
+  disabled?: boolean;
 };
 
 export function ProductDetailBottomBar({
@@ -27,6 +28,7 @@ export function ProductDetailBottomBar({
   onAddToCart,
   onBuyNow,
   inStock = true,
+  disabled = false,
 }: ProductDetailBottomBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 12);
@@ -45,13 +47,19 @@ export function ProductDetailBottomBar({
       </View>
       {inStock ? (
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.buyBtn} activeOpacity={0.7} onPress={onBuyNow}>
+          <TouchableOpacity
+            style={[styles.buyBtn, disabled && styles.actionDisabled]}
+            activeOpacity={0.7}
+            onPress={onBuyNow}
+            disabled={disabled}
+          >
             <Text style={styles.buyText}>Mua ngay</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.cartBtn}
+            style={[styles.cartBtn, disabled && styles.actionDisabled]}
             activeOpacity={0.7}
             onPress={onAddToCart}
+            disabled={disabled}
           >
             <View style={styles.cartIcons}>
               <Ionicons name="cart" size={22} color={COLORS.accentRed} />
@@ -136,6 +144,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+  },
+  actionDisabled: {
+    opacity: 0.5,
   },
   outOfStockWrap: {
     marginTop: 4,
