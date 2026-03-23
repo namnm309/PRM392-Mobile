@@ -511,21 +511,6 @@ export function AIChatbotModal({
               <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Đồng hồ thông minh nào tốt cho chạy bộ?')} activeOpacity={0.8} disabled={loading}>
                 <Text style={styles.popoverChipText}>Đồng hồ thông minh</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Máy tính bảng cho học online và giải trí?')} activeOpacity={0.8} disabled={loading}>
-                <Text style={styles.popoverChipText}>Máy tính bảng</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Laptop gaming giá tốt?')} activeOpacity={0.8} disabled={loading}>
-                <Text style={styles.popoverChipText}>Laptop</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Tai nghe chống ồn ANC tốt?')} activeOpacity={0.8} disabled={loading}>
-                <Text style={styles.popoverChipText}>Tai nghe</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Chính sách bảo hành như thế nào?')} activeOpacity={0.8} disabled={loading}>
-                <Text style={styles.popoverChipText}>Bảo hành</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.popoverChip} onPress={() => handleSend('Cách đặt hàng và thanh toán?')} activeOpacity={0.8} disabled={loading}>
-                <Text style={styles.popoverChipText}>Đặt hàng & thanh toán</Text>
-              </TouchableOpacity>
             </View>
           </ScrollView>
           <View style={[styles.inputRow, { backgroundColor: POPOVER_STYLES.header, borderTopColor: 'rgba(255,255,255,0.1)' }]}>

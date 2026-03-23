@@ -10,7 +10,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -44,7 +43,6 @@ export default function BrandScreen() {
   const horizontalPadding = 16;
   const cardWidth =
     (width - horizontalPadding * 2 - gap * (columns - 1)) / columns;
-  const bannerImageUri = products[0]?.imageUri ?? null;
 
   const displayedProducts = useMemo(() => {
     let list = [...products];
@@ -164,16 +162,6 @@ export default function BrandScreen() {
             ]}
             showsVerticalScrollIndicator={false}
           >
-            {bannerImageUri && (
-              <View style={styles.bannerContainer}>
-                <Image
-                  source={{ uri: bannerImageUri }}
-                  style={styles.bannerImage}
-                  resizeMode="cover"
-                />
-              </View>
-            )}
-
             <Text style={styles.title}>{brandName ?? "Thương hiệu"}</Text>
 
             <View style={styles.criteriaSection}>
@@ -338,15 +326,6 @@ const styles = StyleSheet.create({
   contentScrollContent: {
     paddingHorizontal: 16,
     paddingTop: 4,
-  },
-  bannerContainer: {
-    marginBottom: 12,
-  },
-  bannerImage: {
-    width: "100%",
-    height: 140,
-    borderRadius: 12,
-    backgroundColor: "#f2f2f2",
   },
   criteriaSection: {
     marginBottom: 12,

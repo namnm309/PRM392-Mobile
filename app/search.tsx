@@ -1,4 +1,3 @@
-import { TRENDING_SEARCH_PRODUCTS } from '@/constants/searchTrendingData';
 import { COLORS } from '@/constants/theme';
 import { getSearchHistory, addSearchTerm, clearSearchHistory } from '@/lib/searchHistory';
 import { fetchProducts, mapApiProductToHomeProduct } from '@/lib/productsApi';
@@ -163,26 +162,6 @@ export default function SearchScreen() {
               )}
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Xu hướng tìm kiếm</Text>
-              <View style={styles.trendingGrid}>
-                {TRENDING_SEARCH_PRODUCTS.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.trendingCard}
-                    activeOpacity={0.7}
-                    onPress={() => setQuery(item.name)}
-                  >
-                    <View style={styles.trendingImagePlaceholder}>
-                      <Ionicons name="pricetag-outline" size={22} color={COLORS.headerBlue} />
-                    </View>
-                    <Text style={styles.trendingName} numberOfLines={2}>
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
           </>
         )}
 
@@ -319,28 +298,6 @@ const styles = StyleSheet.create({
   historyText: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.cartTextPrimary,
-  },
-  trendingGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -6,
-  },
-  trendingCard: {
-    width: '50%',
-    paddingHorizontal: 6,
-    marginBottom: 12,
-  },
-  trendingImagePlaceholder: {
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: COLORS.categoryContentBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  trendingName: {
-    fontSize: 13,
     color: COLORS.cartTextPrimary,
   },
   productsLoading: {

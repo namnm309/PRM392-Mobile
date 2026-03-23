@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const COLS = 5;
-const MAX_ITEMS = 10;
+const MAX_ITEMS = 5;
 
 const FALLBACK_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   'Điện thoại': 'phone-portrait-outline',
